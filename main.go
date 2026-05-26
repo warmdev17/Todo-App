@@ -12,6 +12,10 @@ type Task struct {
 	Completed bool   `json:"completed"`
 }
 
+var input struct {
+	Title string `json:"title"`
+}
+
 var tasks = []Task{
 	{ID: 1, Title: "Learn Go net/http", Completed: false},
 	{ID: 2, Title: "Build TODO REST API app", Completed: false},
@@ -28,10 +32,18 @@ func main() {
 }
 
 func tasksHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	if r.Method == http.MethodGet {
 		log.Print("/GET")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Content-Type", "application/json")
 		err := json.NewEncoder(w).Encode(map[string]any{
 			"success": true,
 			"data":    tasks,
@@ -39,6 +51,31 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatal("Failed to write JSON", err)
 		}
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		log.Print("/POST")
+		err := json.NewDecoder(r.Body).Decode(&input)
+		if err != nil {
+			log.Fatal("Failed to read json:", err)
+		}
+
+		newTask := Task{
+			ID:        len(tasks) + 1,
+			Title:     input.Title,
+			Completed: false,
+		}
+
+		tasks = append(tasks, newTask)
+		w.WriteHeader(http.StatusCreated)
+		if err := json.NewEncoder(w).Encode(map[string]any{
+			"success": true,
+			"data":    newTask,
+		}); err != nil {
+			log.Fatal("Failed to writer json:", err)
+		}
+
 		return
 	}
 
