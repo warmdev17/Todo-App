@@ -12,10 +12,6 @@ type Task struct {
 	Completed bool   `json:"completed"`
 }
 
-var input struct {
-	Title string `json:"title"`
-}
-
 var tasks = []Task{
 	{ID: 1, Title: "Learn Go net/http", Completed: false},
 	{ID: 2, Title: "Build TODO REST API app", Completed: false},
@@ -49,16 +45,21 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			"data":    tasks,
 		})
 		if err != nil {
-			log.Fatal("Failed to write JSON", err)
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
 		}
 		return
 	}
 
 	if r.Method == http.MethodPost {
+		var input struct {
+			Title string `json:"title"`
+		}
+
 		log.Print("/POST")
 		err := json.NewDecoder(r.Body).Decode(&input)
 		if err != nil {
-			log.Fatal("Failed to read json:", err)
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		}
 
 		newTask := Task{
@@ -73,7 +74,8 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			"success": true,
 			"data":    newTask,
 		}); err != nil {
-			log.Fatal("Failed to writer json:", err)
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
 		}
 
 		return
