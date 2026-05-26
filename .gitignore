@@ -1,4 +1,32 @@
 # ignore binary
 bin/
 
+# Frontend
+Todo-Frontend/node_modules/
+Todo-Frontend/dist/
+Todo-Frontend/.vite/
+
+# Env
 .env
+.env.*
+Todo-Frontend/.env
+Todo-Frontend/.env.*
+Todo-Backend/.env
+Todo-Backend/.env.*
+
+# Go
+Todo-Backend/*.exe
+Todo-Backend/*.test
+Todo-Backend/coverage.out
+Todo-Backend/bin/
+Todo-Backend/tmp/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db

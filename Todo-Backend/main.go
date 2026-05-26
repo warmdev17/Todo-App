@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/joho/godotenv"
 )
@@ -26,8 +27,8 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 	http.HandleFunc("/tasks", tasksHandler)
-	log.Print("Server running on http://localhost:8080")
-	err = http.ListenAndServe(":8080", nil)
+	log.Println("Server running on http://localhost:" + os.Getenv("APP_PORT"))
+	err = http.ListenAndServe(":"+os.Getenv("APP_PORT"), nil)
 	if err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
