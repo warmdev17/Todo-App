@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
+	"github.com/joho/godotenv"
 )
 
 type Task struct {
@@ -19,9 +21,13 @@ var tasks = []Task{
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 	http.HandleFunc("/tasks", tasksHandler)
 	log.Print("Server running on http://localhost:8080")
-	err := http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
