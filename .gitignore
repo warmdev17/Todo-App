@@ -1,2 +1,4 @@
 # ignore binary
 bin/
+
+.env
