@@ -60,6 +60,12 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		err := json.NewDecoder(r.Body).Decode(&input)
 		if err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+
+		if input.Title == "" {
+			http.Error(w, "Title is required", http.StatusBadRequest)
+			return
 		}
 
 		newTask := Task{
