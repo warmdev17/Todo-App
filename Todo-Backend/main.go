@@ -133,8 +133,31 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 		}
+	case http.MethodDelete:
+		{
+			log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
+
+			id, err := getIDFromPath(r)
+			if err != nil {
+				http.Error(w, "Invalid task id", http.StatusBadRequest)
+			}
+
+			for index, task := range tasks {
+				if task.ID == id {
+					if err := json.NewEncoder(w).Encode(map[string]any{
+						"success": true,
+						"data":    task,
+					}); err != nil {
+						http.Error(w, "Invalid JSON", http.StatusBadRequest)
+						return
+					}
+					tasks = append(tasks[:index], tasks[index+1:]...)
+				}
+			}
+		}
 	case http.MethodOptions:
 		{
+			log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
