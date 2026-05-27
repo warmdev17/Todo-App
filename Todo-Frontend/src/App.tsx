@@ -60,6 +60,24 @@ function App() {
     console.log(result);
   }
 
+  async function handleToggleCompleted(id: number, isChecked: boolean) {
+    const response = await fetch(`${apiUrl}/tasks/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ completed: isChecked }),
+    });
+
+    const result: ApiResponse<Todo> = await response.json();
+
+    if (result.success) {
+      setTodos((currentTodos) =>
+        currentTodos.map((todo) => (todo.id === id ? result.data : todo)),
+      );
+    }
+  }
+
   useEffect(() => {
     async function getTodos() {
       const response = await fetch(`${apiUrl}/tasks`);
@@ -81,7 +99,13 @@ function App() {
         {todos.map((todo) => (
           <li className="todo-item" key={todo.id}>
             <div className="todo-item-content">
-              <input type="checkbox" checked={todo.completed} />
+              <input
+                type="checkbox"
+                checked={todo.completed}
+                onChange={(event) =>
+                  handleToggleCompleted(todo.id, event.currentTarget.checked)
+                }
+              />
               <span>{todo.title}</span>
             </div>
             <button onClick={() => handleDeleteTodo(todo.id)}>
