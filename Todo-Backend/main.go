@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -27,6 +29,7 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 	http.HandleFunc("/tasks", tasksHandler)
+	http.HandleFunc("/tasks/", taskByIDHandler)
 	log.Println("Server running on http://localhost:" + os.Getenv("APP_PORT"))
 	err = http.ListenAndServe(":"+os.Getenv("APP_PORT"), nil)
 	if err != nil {
@@ -95,4 +98,32 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+}
+
+func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
+	idText := strings.TrimPrefix(r.URL.Path, "/tasks/")
+	id, err := strconv.Atoi(idText)
+	if err != nil {
+		http.Error(w, "Invalid task id", http.StatusBadRequest)
+		return
+	}
+
+	if r.Method == http.MethodDelete {
+		for index, task := range tasks {
+			if task.ID == id {
+				tasks = append(tasks[:index], tasks[index+1:]...)
+
+				err := json.NewEncoder(w).Encode(map[string]any{
+					"success": true,
+					"data":    task,
+				})
+				if err != nil {
+					http.Error(w, "INVALID JSON", http.StatusBadRequest)
+				}
+				return
+			}
+		}
+	}
+
+	http.Error(w, "Task not found", http.StatusNotFound)
 }
