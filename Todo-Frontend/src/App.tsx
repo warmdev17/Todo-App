@@ -57,7 +57,9 @@ function App() {
 
     const result: ApiResponse<Todo> = await repsonse.json();
 
-    console.log(result);
+    if (result.success) {
+      setTodos((currentTodos) => currentTodos.filter((todo) => todo.id !== id));
+    }
   }
 
   async function handleToggleCompleted(id: number, isChecked: boolean) {
