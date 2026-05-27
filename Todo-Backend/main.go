@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -49,7 +50,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodGet {
-		log.Print("/GET")
+		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 		err := json.NewEncoder(w).Encode(map[string]any{
 			"success": true,
 			"data":    tasks,
@@ -66,7 +67,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			Title string `json:"title"`
 		}
 
-		log.Print("/POST")
+		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 		err := json.NewDecoder(r.Body).Decode(&input)
 		if err != nil {
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
@@ -101,29 +102,66 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
-	idText := strings.TrimPrefix(r.URL.Path, "/tasks/")
-	id, err := strconv.Atoi(idText)
-	if err != nil {
-		http.Error(w, "Invalid task id", http.StatusBadRequest)
-		return
-	}
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
 
-	if r.Method == http.MethodDelete {
-		for index, task := range tasks {
-			if task.ID == id {
-				tasks = append(tasks[:index], tasks[index+1:]...)
-
-				err := json.NewEncoder(w).Encode(map[string]any{
-					"success": true,
-					"data":    task,
-				})
-				if err != nil {
-					http.Error(w, "INVALID JSON", http.StatusBadRequest)
-				}
+	switch r.Method {
+	case http.MethodGet:
+		{
+			log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
+			id, err := getIDFromPath(r)
+			if err != nil {
+				http.Error(w, "Invalid task ID", http.StatusBadRequest)
 				return
 			}
+
+			task, err := getTaskByID(id)
+			if err != nil {
+				http.Error(w, "Task not found", http.StatusNotFound)
+				return
+			}
+
+			err = json.NewEncoder(w).Encode(map[string]any{
+				"success": true,
+				"data":    task,
+			})
+			if err != nil {
+				http.Error(w, "Invalid JSON", http.StatusBadRequest)
+				return
+			}
+
+		}
+	case http.MethodOptions:
+		{
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+	default:
+		{
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+	}
+}
+
+func getTaskByID(id int) (Task, error) {
+	for _, task := range tasks {
+		if task.ID == id {
+			return task, nil
 		}
 	}
 
-	http.Error(w, "Task not found", http.StatusNotFound)
+	return Task{}, errors.New("task not found")
+}
+
+func getIDFromPath(r *http.Request) (int, error) {
+	idText := strings.TrimPrefix(r.URL.Path, "/tasks/")
+	id, err := strconv.Atoi(idText)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }
