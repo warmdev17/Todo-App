@@ -103,7 +103,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 
 func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "DELETE, POST, GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Methods", "DELETE, POST, GET, PATCH, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Content-Type", "application/json")
 
@@ -140,6 +140,7 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 			id, err := getIDFromPath(r)
 			if err != nil {
 				http.Error(w, "Invalid task id", http.StatusBadRequest)
+				return
 			}
 
 			for index, task := range tasks {
@@ -154,6 +155,39 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 					tasks = append(tasks[:index], tasks[index+1:]...)
 				}
 			}
+		}
+	case http.MethodPatch:
+		{
+			var input struct {
+				Completed bool `json:"completed"`
+			}
+			log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
+			id, err := getIDFromPath(r)
+			if err != nil {
+				http.Error(w, "Invalid task id", http.StatusBadRequest)
+				return
+			}
+
+			err = json.NewDecoder(r.Body).Decode(&input)
+			if err != nil {
+				http.Error(w, "Invalid JSON", http.StatusBadRequest)
+				return
+			}
+			idxTask := getTaskIdxByID(id)
+
+			if idxTask != -1 {
+				tasks[idxTask].Completed = input.Completed
+			}
+
+			w.WriteHeader(http.StatusCreated)
+			if err := json.NewEncoder(w).Encode(map[string]any{
+				"success": true,
+				"data":    tasks[idxTask],
+			}); err != nil {
+				http.Error(w, "Invalid JSON", http.StatusBadRequest)
+				return
+			}
+
 		}
 	case http.MethodOptions:
 		{
@@ -187,4 +221,14 @@ func getIDFromPath(r *http.Request) (int, error) {
 	}
 
 	return id, nil
+}
+
+func getTaskIdxByID(id int) int {
+	for index, task := range tasks {
+		if task.ID == id {
+			return index
+		}
+	}
+
+	return -1
 }
