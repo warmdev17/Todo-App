@@ -1,0 +1,12 @@
+### Get all todo
+GET http://localhost:8080/tasks
+
+###
+
+### Create new todo
+POST http://localhost:8080/tasks
+Content-Type: application/json
+
+{
+  "title": "Learn React"
+}
