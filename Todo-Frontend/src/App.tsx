@@ -50,6 +50,16 @@ function App() {
     }
   }
 
+  async function handleDeleteTodo(id: number) {
+    const repsonse = await fetch(`${apiUrl}/tasks/${id}`, {
+      method: "DELETE",
+    });
+
+    const result: ApiResponse<Todo> = await repsonse.json();
+
+    console.log(result);
+  }
+
   useEffect(() => {
     async function getTodos() {
       const response = await fetch(`${apiUrl}/tasks`);
@@ -74,7 +84,9 @@ function App() {
               <input type="checkbox" checked={todo.completed} />
               <span>{todo.title}</span>
             </div>
-            <FontAwesomeIcon icon={faTrashCan} />
+            <button onClick={() => handleDeleteTodo(todo.id)}>
+              <FontAwesomeIcon icon={faTrashCan} />
+            </button>
           </li>
         ))}
       </ul>
