@@ -248,5 +248,5 @@ func nextTaskID() int {
 		}
 	}
 
-	return max
+	return max + 1
 }
