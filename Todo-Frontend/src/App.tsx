@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { apiUrl } from "./config/env";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrashCan, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
-import { library } from "@fortawesome/fontawesome-svg-core";
-
-/* import all the icons in Free Solid, Free Regular, and Brands styles */
-import { fas } from "@fortawesome/free-solid-svg-icons";
-import { far } from "@fortawesome/free-regular-svg-icons";
-import { fab } from "@fortawesome/free-brands-svg-icons";
+import {
+  faCheck,
+  faCirclePlus,
+  faPenToSquare,
+  faTrashCan,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
 
 import "./App.css";
 
@@ -28,15 +28,25 @@ function App() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
 
-  library.add(fas, far, fab);
+  const completedCount = todos.filter((todo) => todo.completed).length;
+  const activeCount = todos.length - completedCount;
+  const progressPercent = todos.length
+    ? Math.round((completedCount / todos.length) * 100)
+    : 0;
 
   function editTodo(todo: Todo) {
     setEditingId(todo.id);
     setEditingTitle(todo.title);
   }
 
+  function cancelEditTodo() {
+    setEditingId(null);
+    setEditingTitle("");
+  }
+
   async function saveEditTodo(id: number) {
     const trimmedTitle = editingTitle.trim();
+    if (!trimmedTitle) return;
 
     const response = await fetch(`${apiUrl}/tasks/${id}`, {
       method: "PATCH",
@@ -55,13 +65,11 @@ function App() {
       setTodos((currentTodos) =>
         currentTodos.map((todo) => (todo.id === id ? result.data : todo)),
       );
+      cancelEditTodo();
     }
-
-    setEditingId(null);
-    setEditingTitle("");
   }
 
-  async function handleCreateTodo(event: React.SubmitEvent<HTMLFormElement>) {
+  async function handleCreateTodo(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const trimmedTitle = title.trim();
@@ -78,17 +86,17 @@ function App() {
     const result: ApiResponse<Todo> = await response.json();
 
     if (result.success) {
-      setTodos((currentTodos) => [...currentTodos, result.data]);
+      setTodos((currentTodos) => [result.data, ...currentTodos]);
       setTitle("");
     }
   }
 
   async function handleDeleteTodo(id: number) {
-    const repsonse = await fetch(`${apiUrl}/tasks/${id}`, {
+    const response = await fetch(`${apiUrl}/tasks/${id}`, {
       method: "DELETE",
     });
 
-    const result: ApiResponse<Todo> = await repsonse.json();
+    const result: ApiResponse<Todo> = await response.json();
 
     if (result.success) {
       setTodos((currentTodos) => currentTodos.filter((todo) => todo.id !== id));
@@ -127,57 +135,152 @@ function App() {
   }, []);
 
   return (
-    <main className="container">
-      <h1>Todo App</h1>
+    <main className="app-shell">
+      <section className="app-card">
+        <header className="topbar">
+          <div>
+            <p className="eyebrow">warmdev todo</p>
+            <h1>Tasks</h1>
+          </div>
 
-      <ul className="todo-list">
-        {todos.map((todo) => (
-          <li className="todo-item" key={todo.id}>
-            <div className="todo-item-content">
-              <input
-                type="checkbox"
-                checked={todo.completed}
-                onChange={(event) =>
-                  handleToggleCompleted(todo.id, event.currentTarget.checked)
-                }
+          <div className="auth-slot">
+            {/* Later: put Login / Logout / User menu here */}
+            <span>Guest mode</span>
+          </div>
+        </header>
+
+        <section className="summary-row" aria-label="Todo summary">
+          <div className="summary-card">
+            <span>Total</span>
+            <strong>{todos.length}</strong>
+          </div>
+          <div className="summary-card">
+            <span>Active</span>
+            <strong>{activeCount}</strong>
+          </div>
+          <div className="summary-card">
+            <span>Done</span>
+            <strong>{completedCount}</strong>
+          </div>
+          <div className="progress-card">
+            <div className="progress-info">
+              <span>Progress</span>
+              <strong>{progressPercent}%</strong>
+            </div>
+            <div className="progress-track">
+              <div
+                className="progress-fill"
+                style={{ width: `${progressPercent}%` }}
               />
-              {editingId === todo.id ? (
-                <>
-                  <input
-                    type="text"
-                    value={editingTitle}
-                    onChange={(event) => setEditingTitle(event.target.value)}
-                  />
-                  <button onClick={() => saveEditTodo(editingId)}>Save</button>
-                  <button onClick={() => setEditingId(null)}>Cancel</button>
-                </>
-              ) : (
-                <span>{todo.title}</span>
-              )}
             </div>
-            <div className="action-btn">
-              <button onClick={() => editTodo(todo)}>
-                <FontAwesomeIcon icon={faPenToSquare} />
-              </button>
-              <button onClick={() => handleDeleteTodo(todo.id)}>
-                <FontAwesomeIcon icon={faTrashCan} />
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+          </div>
+        </section>
 
-      <form id="create-todo-form" onSubmit={handleCreateTodo}>
-        <input
-          value={title}
-          onChange={(event) => setTitle(event.target.value)}
-          placeholder="Enter todo..."
-          className="todo-title-input"
-        />
-        <button type="submit" className="add-todo-btn">
-          Add
-        </button>
-      </form>
+        <form className="composer" onSubmit={handleCreateTodo}>
+          <input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder="Add a new task..."
+            className="todo-title-input"
+          />
+          <button type="submit" className="add-todo-btn">
+            <FontAwesomeIcon icon={faCirclePlus} />
+            Add
+          </button>
+        </form>
+
+        <section className="task-panel">
+          <div className="panel-header">
+            <h2>Today</h2>
+            <span>{activeCount} active</span>
+          </div>
+
+          {todos.length === 0 ? (
+            <div className="empty-state">
+              <strong>No task yet</strong>
+              <p>Create your first task and ship something small.</p>
+            </div>
+          ) : (
+            <ul className="todo-list">
+              {todos.map((todo) => (
+                <li
+                  className={`todo-item ${todo.completed ? "is-completed" : ""}`}
+                  key={todo.id}
+                >
+                  <label className="check-wrap">
+                    <input
+                      type="checkbox"
+                      checked={todo.completed}
+                      onChange={(event) =>
+                        handleToggleCompleted(
+                          todo.id,
+                          event.currentTarget.checked,
+                        )
+                      }
+                    />
+                    <span className="custom-check">
+                      <FontAwesomeIcon icon={faCheck} />
+                    </span>
+                  </label>
+
+                  <div className="task-content">
+                    {editingId === todo.id ? (
+                      <div className="edit-row">
+                        <input
+                          type="text"
+                          value={editingTitle}
+                          onChange={(event) =>
+                            setEditingTitle(event.target.value)
+                          }
+                          className="edit-title-input"
+                          autoFocus
+                        />
+                        <button
+                          className="save-btn"
+                          type="button"
+                          onClick={() => saveEditTodo(todo.id)}
+                          aria-label="Save todo"
+                        >
+                          <FontAwesomeIcon icon={faCheck} />
+                        </button>
+                        <button
+                          className="cancel-btn"
+                          type="button"
+                          onClick={cancelEditTodo}
+                          aria-label="Cancel edit"
+                        >
+                          <FontAwesomeIcon icon={faXmark} />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="todo-title">{todo.title}</span>
+                    )}
+                  </div>
+
+                  <div className="action-btn">
+                    <button
+                      className="icon-btn"
+                      type="button"
+                      aria-label="Edit todo"
+                      onClick={() => editTodo(todo)}
+                    >
+                      <FontAwesomeIcon icon={faPenToSquare} />
+                    </button>
+                    <button
+                      className="icon-btn danger"
+                      type="button"
+                      aria-label="Delete todo"
+                      onClick={() => handleDeleteTodo(todo.id)}
+                    >
+                      <FontAwesomeIcon icon={faTrashCan} />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </section>
     </main>
   );
 }
