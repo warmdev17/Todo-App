@@ -159,7 +159,8 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPatch:
 		{
 			var input struct {
-				Completed bool `json:"completed"`
+				Completed *bool   `json:"completed"`
+				Title     *string `json:"title"`
 			}
 			log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 			id, err := getIDFromPath(r)
@@ -173,19 +174,31 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "Invalid JSON", http.StatusBadRequest)
 				return
 			}
-			idxTask := getTaskIdxByID(id)
 
-			if idxTask != -1 {
-				tasks[idxTask].Completed = input.Completed
-			}
+			for index, task := range tasks {
+				if task.ID == id {
+					if input.Title != nil {
+						tasks[index].Title = strings.TrimSpace(*input.Title)
+					}
 
-			w.WriteHeader(http.StatusCreated)
-			if err := json.NewEncoder(w).Encode(map[string]any{
-				"success": true,
-				"data":    tasks[idxTask],
-			}); err != nil {
-				http.Error(w, "Invalid JSON", http.StatusBadRequest)
-				return
+					if input.Completed != nil {
+						tasks[index].Completed = *input.Completed
+					}
+
+					w.WriteHeader(http.StatusCreated)
+					if err := json.NewEncoder(w).Encode(map[string]any{
+						"success": true,
+						"data":    tasks[index],
+					}); err != nil {
+						http.Error(w, "Invalid JSON", http.StatusBadRequest)
+						return
+					}
+
+					log.Println(tasks)
+
+					return
+
+				}
 			}
 
 		}
@@ -221,14 +234,4 @@ func getIDFromPath(r *http.Request) (int, error) {
 	}
 
 	return id, nil
-}
-
-func getTaskIdxByID(id int) int {
-	for index, task := range tasks {
-		if task.ID == id {
-			return index
-		}
-	}
-
-	return -1
 }
