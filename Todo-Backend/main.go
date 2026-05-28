@@ -238,7 +238,7 @@ func getIDFromPath(r *http.Request) (int, error) {
 
 func nextTaskID() int {
 	if len(tasks) == 0 {
-		return -1
+		return 1
 	}
 	max := tasks[0].ID
 
