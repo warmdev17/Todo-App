@@ -21,7 +21,6 @@ type Task struct {
 var tasks = []Task{
 	{ID: 1, Title: "Learn Go net/http", Completed: false},
 	{ID: 2, Title: "Build TODO REST API app", Completed: false},
-	{ID: 3, Title: "Hello bro", Completed: true},
 }
 
 func main() {
@@ -193,8 +192,6 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 						http.Error(w, "Invalid JSON", http.StatusBadRequest)
 						return
 					}
-
-					log.Println(tasks)
 
 					return
 
