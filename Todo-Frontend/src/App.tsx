@@ -69,7 +69,7 @@ function App() {
     }
   }
 
-  async function handleCreateTodo(event: React.FormEvent<HTMLFormElement>) {
+  async function handleCreateTodo(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const trimmedTitle = title.trim();
