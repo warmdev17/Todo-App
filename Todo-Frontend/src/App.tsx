@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiUrl } from "./config/env";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { faTrashCan, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 import { library } from "@fortawesome/fontawesome-svg-core";
 
 /* import all the icons in Free Solid, Free Regular, and Brands styles */
@@ -25,8 +25,41 @@ type ApiResponse<T> = {
 function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [title, setTitle] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
 
   library.add(fas, far, fab);
+
+  function editTodo(todo: Todo) {
+    setEditingId(todo.id);
+    setEditingTitle(todo.title);
+  }
+
+  async function saveEditTodo(id: number) {
+    const trimmedTitle = editingTitle.trim();
+
+    const response = await fetch(`${apiUrl}/tasks/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id,
+        title: trimmedTitle,
+      }),
+    });
+
+    const result: ApiResponse<Todo> = await response.json();
+
+    if (result.success) {
+      setTodos((currentTodos) =>
+        currentTodos.map((todo) => (todo.id === id ? result.data : todo)),
+      );
+    }
+
+    setEditingId(null);
+    setEditingTitle("");
+  }
 
   async function handleCreateTodo(event: React.SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -108,11 +141,28 @@ function App() {
                   handleToggleCompleted(todo.id, event.currentTarget.checked)
                 }
               />
-              <span>{todo.title}</span>
+              {editingId === todo.id ? (
+                <>
+                  <input
+                    type="text"
+                    value={editingTitle}
+                    onChange={(event) => setEditingTitle(event.target.value)}
+                  />
+                  <button onClick={() => saveEditTodo(editingId)}>Save</button>
+                  <button onClick={() => setEditingId(null)}>Cancel</button>
+                </>
+              ) : (
+                <span>{todo.title}</span>
+              )}
             </div>
-            <button onClick={() => handleDeleteTodo(todo.id)}>
-              <FontAwesomeIcon icon={faTrashCan} />
-            </button>
+            <div className="action-btn">
+              <button onClick={() => editTodo(todo)}>
+                <FontAwesomeIcon icon={faPenToSquare} />
+              </button>
+              <button onClick={() => handleDeleteTodo(todo.id)}>
+                <FontAwesomeIcon icon={faTrashCan} />
+              </button>
+            </div>
           </li>
         ))}
       </ul>
