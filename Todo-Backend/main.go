@@ -80,7 +80,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		newTask := Task{
-			ID:        len(tasks) + 1,
+			ID:        nextTaskID(),
 			Title:     input.Title,
 			Completed: false,
 		}
@@ -234,4 +234,19 @@ func getIDFromPath(r *http.Request) (int, error) {
 	}
 
 	return id, nil
+}
+
+func nextTaskID() int {
+	if len(tasks) == 0 {
+		return -1
+	}
+	max := tasks[0].ID
+
+	for _, task := range tasks {
+		if task.ID > max {
+			max = task.ID
+		}
+	}
+
+	return max
 }
