@@ -38,12 +38,12 @@ type RegisterInput struct {
 }
 
 var tasks = []Task{
-	{ID: 1, Title: "Learn Go net/http", Completed: false},
-	{ID: 2, Title: "Build TODO REST API app", Completed: false},
+	{ID: 0, Title: "Learn Go net/http", Completed: false},
+	{ID: 1, Title: "Build TODO REST API app", Completed: false},
 }
 
 var users = []User{
-	{1, "warmdevofficial@gmail.com", "warmdev", "Warmdev17@todo"},
+	{0, "warmdevofficial@gmail.com", "warmdev", "Warmdev17@todo"},
 }
 
 func main() {
@@ -351,6 +351,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 	var input RegisterInput
 
 	if r.Method == http.MethodPost {
+		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			http.Error(w, "Invalid JSON Body", http.StatusBadRequest)
 			return
@@ -369,7 +370,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		if len(errs) > 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			if err := json.NewEncoder(w).Encode(map[string]any{
-				"success": true,
+				"success": false,
 				"data":    nil,
 				"errors":  errs,
 			}); err != nil {
@@ -377,6 +378,23 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+		}
+
+		newUser := User{
+			ID:       nextUserID(),
+			Username: *input.Username,
+			Email:    *input.Email,
+			Password: *input.Password,
+		}
+		users = append(users, newUser)
+		w.WriteHeader(http.StatusCreated)
+		err := json.NewEncoder(w).Encode(map[string]any{
+			"success": true,
+			"data":    newUser,
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 	}
 }
@@ -402,14 +420,23 @@ func getIDFromPath(r *http.Request) (int, error) {
 }
 
 func nextTaskID() int {
-	if len(tasks) == 0 {
-		return 1
-	}
 	max := tasks[0].ID
 
 	for _, task := range tasks {
 		if task.ID > max {
 			max = task.ID
+		}
+	}
+
+	return max + 1
+}
+
+func nextUserID() int {
+	max := users[0].ID
+
+	for _, user := range users {
+		if user.ID > max {
+			max = user.ID
 		}
 	}
 
