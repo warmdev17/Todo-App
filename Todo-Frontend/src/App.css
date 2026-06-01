@@ -77,7 +77,7 @@ button {
 
 .eyebrow {
   margin: 0 0 6px;
-  color: var(--mauve);
+  color: var(--blue);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -421,7 +421,7 @@ h1 {
   border: 0;
   border-radius: 999px;
   padding: 8px 14px;
-  background: var(--mauve);
+  background: var(--blue);
   color: var(--crust);
   font-weight: 800;
 }
