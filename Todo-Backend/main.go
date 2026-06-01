@@ -30,6 +30,13 @@ type AuthUser struct {
 	Email string `json:"email"`
 }
 
+type RegisterInput struct {
+	Email           *string `json:"email"`
+	Username        *string `json:"username"`
+	Password        *string `json:"password"`
+	ConfirmPassword *string `json:"confirmPassword"`
+}
+
 var tasks = []Task{
 	{ID: 1, Title: "Learn Go net/http", Completed: false},
 	{ID: 2, Title: "Build TODO REST API app", Completed: false},
@@ -47,6 +54,7 @@ func main() {
 	http.HandleFunc("/tasks", tasksHandler)
 	http.HandleFunc("/tasks/", taskByIDHandler)
 	http.HandleFunc("/login", loginHandler)
+	http.HandleFunc("/register", registerHandler)
 	log.Println("Server running on http://localhost:" + os.Getenv("APP_PORT"))
 	err = http.ListenAndServe(":"+os.Getenv("APP_PORT"), nil)
 	if err != nil {
@@ -329,6 +337,50 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func registerHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	var input RegisterInput
+
+	if r.Method == http.MethodPost {
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+			http.Error(w, "Invalid JSON Body", http.StatusBadRequest)
+			return
+		}
+
+		if input.Username == nil &&
+			input.Email == nil &&
+			input.Password == nil &&
+			input.ConfirmPassword == nil {
+			http.Error(w, "request body is required", http.StatusBadRequest)
+			return
+		}
+
+		errs := validateCreateUser(input)
+
+		if len(errs) > 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			if err := json.NewEncoder(w).Encode(map[string]any{
+				"success": true,
+				"data":    nil,
+				"errors":  errs,
+			}); err != nil {
+				http.Error(w, "Invalid JSON Body", http.StatusBadRequest)
+				return
+			}
+
+		}
+	}
+}
+
 func getTaskByID(id int) (Task, error) {
 	for _, task := range tasks {
 		if task.ID == id {
@@ -382,4 +434,33 @@ func findUserByUsername(username string) (User, error) {
 	}
 
 	return User{}, errors.New("user does not exists")
+}
+
+func isBlankPointer(value *string) bool {
+	return value == nil || strings.TrimSpace(*value) == ""
+}
+
+func validateCreateUser(input RegisterInput) []string {
+	var errorsList []string
+	if isBlankPointer(input.Username) {
+		errorsList = append(errorsList, "username is required")
+	}
+
+	if isBlankPointer(input.Email) {
+		errorsList = append(errorsList, "email is required")
+	}
+
+	if isBlankPointer(input.Password) {
+		errorsList = append(errorsList, "password is required")
+	}
+
+	if isBlankPointer(input.ConfirmPassword) {
+		errorsList = append(errorsList, "confirm password is required")
+	}
+
+	if len(errorsList) == 0 && *input.Password != *input.ConfirmPassword {
+		errorsList = append(errorsList, "passwords do not match")
+	}
+
+	return errorsList
 }
