@@ -377,7 +377,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "Invalid JSON Body", http.StatusBadRequest)
 				return
 			}
-
+			return
 		}
 
 		newUser := User{
