@@ -409,3 +409,129 @@ h1 {
     flex-direction: column;
   }
 }
+
+.auth-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+}
+
+.auth-slot button {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: var(--mauve);
+  color: var(--crust);
+  font-weight: 800;
+}
+
+.auth-slot button:hover {
+  filter: brightness(1.08);
+}
+
+.current-user {
+  padding: 0 8px;
+  color: var(--green);
+  font-weight: 800;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(17, 17, 27, 0.76);
+  backdrop-filter: blur(10px);
+}
+
+.auth-modal {
+  width: min(440px, 100%);
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--mantle);
+  box-shadow: 0 24px 80px rgba(17, 17, 27, 0.5);
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.modal-close-btn {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface0);
+  color: var(--subtext1);
+}
+
+.modal-close-btn:hover {
+  color: var(--red);
+  border-color: var(--red);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--subtext1);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.auth-form input {
+  min-height: 48px;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0 14px;
+  outline: none;
+  background: var(--crust);
+  color: var(--text);
+}
+
+.auth-form input:focus {
+  border-color: var(--blue);
+}
+
+.auth-error {
+  margin: 0;
+  color: var(--red);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.modal-submit {
+  min-height: 48px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--blue);
+  color: var(--crust);
+  font-weight: 900;
+}
+
+.auth-switch-btn {
+  width: 100%;
+  margin-top: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--mauve);
+  font-weight: 800;
+}

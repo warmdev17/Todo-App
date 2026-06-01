@@ -17,10 +17,24 @@ type Todo = {
   completed: boolean;
 };
 
+type User = {
+  userId?: number;
+  id?: number;
+  username: string;
+  token: string;
+};
+
 type ApiResponse<T> = {
   success: boolean;
   data: T;
+  message?: string;
 };
+
+type LoginInput =
+  | { username: string; password: string }
+  | { email: string; password: string };
+
+type AuthMode = "login" | "register";
 
 function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -28,11 +42,43 @@ function App() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
 
+  const [currentUser, setCurrentUser] = useState<string | null>(() =>
+    localStorage.getItem("currentUser"),
+  );
+  const [authMode, setAuthMode] = useState<AuthMode | null>(null);
+  const [authUsername, setAuthUsername] = useState("");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authError, setAuthError] = useState("");
+
   const completedCount = todos.filter((todo) => todo.completed).length;
   const activeCount = todos.length - completedCount;
   const progressPercent = todos.length
     ? Math.round((completedCount / todos.length) * 100)
     : 0;
+
+  function resetAuthForm() {
+    setAuthUsername("");
+    setAuthEmail("");
+    setAuthPassword("");
+    setAuthError("");
+  }
+
+  function openAuthModal(mode: AuthMode) {
+    resetAuthForm();
+    setAuthMode(mode);
+  }
+
+  function closeAuthModal() {
+    resetAuthForm();
+    setAuthMode(null);
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("currentUser");
+    setCurrentUser(null);
+  }
 
   function editTodo(todo: Todo) {
     setEditingId(todo.id);
@@ -44,6 +90,15 @@ function App() {
     setEditingTitle("");
   }
 
+  async function getTodos() {
+    const response = await fetch(`${apiUrl}/tasks`);
+    const result: ApiResponse<Todo[]> = await response.json();
+
+    if (result.success) {
+      setTodos(result.data);
+    }
+  }
+
   async function saveEditTodo(id: number) {
     const trimmedTitle = editingTitle.trim();
     if (!trimmedTitle) return;
@@ -53,10 +108,7 @@ function App() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        id,
-        title: trimmedTitle,
-      }),
+      body: JSON.stringify({ title: trimmedTitle }),
     });
 
     const result: ApiResponse<Todo> = await response.json();
@@ -121,16 +173,84 @@ function App() {
     }
   }
 
-  useEffect(() => {
-    async function getTodos() {
-      const response = await fetch(`${apiUrl}/tasks`);
-      const result: ApiResponse<Todo[]> = await response.json();
+  async function handleLogin(input: LoginInput) {
+    const response = await fetch(`${apiUrl}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(input),
+    });
 
-      if (result.success) {
-        setTodos(result.data);
-      }
+    const result: ApiResponse<User> = await response.json();
+
+    if (!response.ok || !result.success) {
+      setAuthError(result.message ?? "Login failed");
+      return;
     }
 
+    localStorage.setItem("token", result.data.token);
+    localStorage.setItem("currentUser", result.data.username);
+    setCurrentUser(result.data.username);
+    closeAuthModal();
+  }
+
+  async function handleRegister() {
+    const username = authUsername.trim();
+    const email = authEmail.trim();
+    const password = authPassword.trim();
+
+    if (!username || !email || !password) {
+      setAuthError("Please fill all fields");
+      return;
+    }
+
+    const response = await fetch(`${apiUrl}/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username, email, password }),
+    });
+
+    const result: ApiResponse<User> = await response.json();
+
+    if (!response.ok || !result.success) {
+      setAuthError(result.message ?? "Register failed");
+      return;
+    }
+
+    setAuthError("");
+    setAuthMode("login");
+    setAuthPassword("");
+  }
+
+  async function handleSubmitAuth(event: React.SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const emailOrUsername = authEmail.trim();
+    const password = authPassword.trim();
+
+    if (authMode === "login") {
+      if (!emailOrUsername || !password) {
+        setAuthError("Please enter your email/username and password");
+        return;
+      }
+
+      if (emailOrUsername.includes("@")) {
+        await handleLogin({ email: emailOrUsername, password });
+      } else {
+        await handleLogin({ username: emailOrUsername, password });
+      }
+
+      return;
+    }
+
+    await handleRegister();
+  }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     getTodos();
   }, []);
 
@@ -144,8 +264,23 @@ function App() {
           </div>
 
           <div className="auth-slot">
-            {/* Later: put Login / Logout / User menu here */}
-            <span>Guest mode</span>
+            {currentUser ? (
+              <>
+                <span className="current-user">@{currentUser}</span>
+                <button type="button" onClick={handleLogout}>
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <button type="button" onClick={() => openAuthModal("login")}>
+                  Login
+                </button>
+                <button type="button" onClick={() => openAuthModal("register")}>
+                  Register
+                </button>
+              </>
+            )}
           </div>
         </header>
 
@@ -281,6 +416,84 @@ function App() {
           )}
         </section>
       </section>
+
+      {authMode && (
+        <div className="modal-backdrop" role="presentation">
+          <section className="auth-modal" aria-label="Authentication modal">
+            <div className="modal-header">
+              <div>
+                <p className="eyebrow">account</p>
+                <h2>{authMode === "login" ? "Login" : "Register"}</h2>
+              </div>
+              <button
+                className="modal-close-btn"
+                type="button"
+                onClick={closeAuthModal}
+                aria-label="Close modal"
+              >
+                <FontAwesomeIcon icon={faXmark} />
+              </button>
+            </div>
+
+            <form className="auth-form" onSubmit={handleSubmitAuth}>
+              {authMode === "register" && (
+                <label>
+                  <span>Username</span>
+                  <input
+                    value={authUsername}
+                    onChange={(event) => setAuthUsername(event.target.value)}
+                    placeholder="warmdev"
+                  />
+                </label>
+              )}
+
+              <label>
+                <span>
+                  {authMode === "login" ? "Email or username" : "Email"}
+                </span>
+                <input
+                  value={authEmail}
+                  onChange={(event) => setAuthEmail(event.target.value)}
+                  placeholder={
+                    authMode === "login"
+                      ? "warmdev or warmdev@mail.com"
+                      : "warmdev@mail.com"
+                  }
+                />
+              </label>
+
+              <label>
+                <span>Password</span>
+                <input
+                  value={authPassword}
+                  onChange={(event) => setAuthPassword(event.target.value)}
+                  placeholder="••••••••"
+                  type="password"
+                />
+              </label>
+
+              {authError && <p className="auth-error">{authError}</p>}
+
+              <button className="modal-submit" type="submit">
+                {authMode === "login" ? "Login" : "Create account"}
+              </button>
+            </form>
+
+            <button
+              className="auth-switch-btn"
+              type="button"
+              onClick={() => {
+                setAuthError("");
+                setAuthMode(authMode === "login" ? "register" : "login");
+              }}
+            >
+              {authMode === "login"
+                ? "Need an account? Register"
+                : "Already have an account? Login"}
+            </button>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
