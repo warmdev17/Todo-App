@@ -18,9 +18,25 @@ type Task struct {
 	Completed bool   `json:"completed"`
 }
 
+type User struct {
+	ID       int    `json:"id"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Password string `json:"-"`
+}
+
+type AuthUser struct {
+	ID    int    `json:"id"`
+	Email string `json:"email"`
+}
+
 var tasks = []Task{
 	{ID: 1, Title: "Learn Go net/http", Completed: false},
 	{ID: 2, Title: "Build TODO REST API app", Completed: false},
+}
+
+var users = []User{
+	{1, "warmdevofficial@gmail.com", "warmdev", "Warmdev17@todo"},
 }
 
 func main() {
@@ -30,6 +46,7 @@ func main() {
 	}
 	http.HandleFunc("/tasks", tasksHandler)
 	http.HandleFunc("/tasks/", taskByIDHandler)
+	http.HandleFunc("/login", loginHandler)
 	log.Println("Server running on http://localhost:" + os.Getenv("APP_PORT"))
 	err = http.ListenAndServe(":"+os.Getenv("APP_PORT"), nil)
 	if err != nil {
@@ -213,6 +230,105 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, POST")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Content-Type", "application/json")
+	var LoginInput struct {
+		Email    *string `json:"email"`
+		Password *string `json:"password"`
+		Username *string `json:"username"`
+	}
+
+	if r.Method == http.MethodOptions {
+		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
+		err := json.NewDecoder(r.Body).Decode(&LoginInput)
+		if err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+
+		var user User
+		if LoginInput.Email != nil {
+			log.Println("Email login")
+			user, err = findUserByEmail(*LoginInput.Email)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			}
+			if user.Password == *LoginInput.Password {
+				w.WriteHeader(http.StatusCreated)
+				err := json.NewEncoder(w).Encode(map[string]any{
+					"success": true,
+					"data": map[string]any{
+						"token":    "fake-token-1",
+						"username": user.Username,
+					},
+				})
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+			} else {
+				w.WriteHeader(http.StatusUnauthorized)
+				err := json.NewEncoder(w).Encode(map[string]any{
+					"success": false,
+					"data":    nil,
+					"error":   "Invalid email or password",
+				})
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+			}
+		}
+
+		if LoginInput.Username != nil {
+			log.Println("Username login")
+			user, err = findUserByUsername(*LoginInput.Username)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			if user.Password == *LoginInput.Password {
+				w.WriteHeader(http.StatusOK)
+				err := json.NewEncoder(w).Encode(map[string]any{
+					"success": true,
+					"data": map[string]any{
+						"token":    "fake-token-1",
+						"username": user.Username,
+					},
+				})
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+			} else {
+				w.WriteHeader(http.StatusUnauthorized)
+				err := json.NewEncoder(w).Encode(map[string]any{
+					"success": false,
+					"data":    nil,
+					"error":   "Invalid username or password",
+				})
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+
+			}
+		}
+
+	}
+}
+
 func getTaskByID(id int) (Task, error) {
 	for _, task := range tasks {
 		if task.ID == id {
@@ -246,4 +362,24 @@ func nextTaskID() int {
 	}
 
 	return max + 1
+}
+
+func findUserByEmail(email string) (User, error) {
+	for _, user := range users {
+		if user.Email == email {
+			return user, nil
+		}
+	}
+
+	return User{}, errors.New("user does not exists")
+}
+
+func findUserByUsername(username string) (User, error) {
+	for _, user := range users {
+		if user.Username == username {
+			return user, nil
+		}
+	}
+
+	return User{}, errors.New("user does not exists")
 }
