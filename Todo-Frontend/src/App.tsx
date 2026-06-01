@@ -49,6 +49,7 @@ function App() {
   const [authUsername, setAuthUsername] = useState("");
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
+  const [authConfirmPassword, setAuthConfirmPassword] = useState("");
   const [authError, setAuthError] = useState("");
 
   const completedCount = todos.filter((todo) => todo.completed).length;
@@ -61,6 +62,7 @@ function App() {
     setAuthUsername("");
     setAuthEmail("");
     setAuthPassword("");
+    setAuthConfirmPassword("");
     setAuthError("");
   }
 
@@ -199,9 +201,15 @@ function App() {
     const username = authUsername.trim();
     const email = authEmail.trim();
     const password = authPassword.trim();
+    const confirmPassword = authConfirmPassword.trim();
 
-    if (!username || !email || !password) {
+    if (!username || !email || !password || !confirmPassword) {
       setAuthError("Please fill all fields");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setAuthError("Passwords do not match");
       return;
     }
 
@@ -210,7 +218,7 @@ function App() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ username, email, password }),
+      body: JSON.stringify({ username, email, password, confirmPassword }),
     });
 
     const result: ApiResponse<User> = await response.json();
@@ -223,6 +231,7 @@ function App() {
     setAuthError("");
     setAuthMode("login");
     setAuthPassword("");
+    setAuthConfirmPassword("");
   }
 
   async function handleSubmitAuth(event: React.SubmitEvent<HTMLFormElement>) {
@@ -472,6 +481,20 @@ function App() {
                 />
               </label>
 
+              {authMode === "register" && (
+                <label>
+                  <span>Confirm password</span>
+                  <input
+                    value={authConfirmPassword}
+                    onChange={(event) =>
+                      setAuthConfirmPassword(event.target.value)
+                    }
+                    placeholder="••••••••"
+                    type="password"
+                  />
+                </label>
+              )}
+
               {authError && <p className="auth-error">{authError}</p>}
 
               <button className="modal-submit" type="submit">
@@ -483,7 +506,7 @@ function App() {
               className="auth-switch-btn"
               type="button"
               onClick={() => {
-                setAuthError("");
+                resetAuthForm();
                 setAuthMode(authMode === "login" ? "register" : "login");
               }}
             >
