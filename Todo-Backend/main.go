@@ -106,7 +106,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 
 		newTask := Task{
 			ID:        nextTaskID(),
-			Title:     input.Title,
+			Title:     strings.TrimSpace(input.Title),
 			Completed: false,
 		}
 
