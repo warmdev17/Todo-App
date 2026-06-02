@@ -26,8 +26,9 @@ type User struct {
 }
 
 type AuthUser struct {
-	ID    int    `json:"id"`
-	Email string `json:"email"`
+	ID       int    `json:"id"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
 }
 
 type RegisterInput struct {
@@ -393,15 +394,19 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 
 		newUser := User{
 			ID:       nextUserID(),
-			Username: *input.Username,
-			Email:    *input.Email,
+			Username: strings.TrimSpace(*input.Username),
+			Email:    strings.TrimSpace(*input.Email),
 			Password: *input.Password,
 		}
 		users = append(users, newUser)
 		w.WriteHeader(http.StatusCreated)
 		err := json.NewEncoder(w).Encode(map[string]any{
 			"success": true,
-			"data":    newUser,
+			"data": AuthUser{
+				ID:       newUser.ID,
+				Email:    newUser.Email,
+				Username: newUser.Username,
+			},
 		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
