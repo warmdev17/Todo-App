@@ -294,16 +294,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			} else {
-				w.WriteHeader(http.StatusUnauthorized)
-				err := json.NewEncoder(w).Encode(map[string]any{
-					"success": false,
-					"data":    nil,
-					"error":   "Invalid email or password",
-				})
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
+				writeError(w, http.StatusUnauthorized, "Invalid email or password")
+				return
 			}
 		} else {
 			log.Println("Username login")
@@ -327,17 +319,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			} else {
-				w.WriteHeader(http.StatusUnauthorized)
-				err := json.NewEncoder(w).Encode(map[string]any{
-					"success": false,
-					"data":    nil,
-					"error":   "Invalid username or password",
-				})
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-
+				writeError(w, http.StatusUnauthorized, "Invalid username or password")
+				return
 			}
 		}
 	}
@@ -371,15 +354,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		errs := validateCreateUser(input)
 
 		if len(errs) > 0 {
-			w.WriteHeader(http.StatusBadRequest)
-			if err := json.NewEncoder(w).Encode(map[string]any{
-				"success": false,
-				"data":    nil,
-				"errors":  errs,
-			}); err != nil {
-				http.Error(w, "Invalid JSON Body", http.StatusBadRequest)
-				return
-			}
+			writeError(w, http.StatusBadRequest, "Invalid JSON Body")
 			return
 		}
 
@@ -512,4 +487,20 @@ func setCORSHeader(w http.ResponseWriter, methods string) {
 	w.Header().Set("Access-Control-Allow-Methods", methods)
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
 	w.Header().Set("Content-Type", "application/json")
+}
+
+func writeJSON(w http.ResponseWriter, statusCode int, data any) {
+	w.WriteHeader(statusCode)
+	err := json.NewEncoder(w).Encode(data)
+	if err != nil {
+		log.Println("invalid json: ", err)
+	}
+}
+
+func writeError(w http.ResponseWriter, statusCode int, message string) {
+	writeJSON(w, statusCode, map[string]any{
+		"success": false,
+		"data":    nil,
+		"errors":  message,
+	})
 }
