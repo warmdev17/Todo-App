@@ -431,6 +431,10 @@ func getIDFromPath(r *http.Request) (int, error) {
 }
 
 func nextTaskID() int {
+	if len(tasks) == 0 {
+		return 1
+	}
+
 	max := tasks[0].ID
 
 	for _, task := range tasks {
@@ -443,6 +447,10 @@ func nextTaskID() int {
 }
 
 func nextUserID() int {
+	if len(users) == 0 {
+		return 1
+	}
+
 	max := users[0].ID
 
 	for _, user := range users {
