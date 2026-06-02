@@ -99,14 +99,16 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if input.Title == "" {
+		trimmedTitle := strings.TrimSpace(input.Title)
+
+		if trimmedTitle == "" {
 			http.Error(w, "Title is required", http.StatusBadRequest)
 			return
 		}
 
 		newTask := Task{
 			ID:        nextTaskID(),
-			Title:     strings.TrimSpace(input.Title),
+			Title:     trimmedTitle,
 			Completed: false,
 		}
 
