@@ -282,7 +282,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println("Email login")
 			user, err = findUserByEmail(*LoginInput.Email)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusNotFound)
+				http.Error(w, err.Error(), http.StatusUnauthorized)
 				return
 			}
 			if user.Password == *LoginInput.Password {
@@ -314,7 +314,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			log.Println("Username login")
 			user, err = findUserByUsername(*LoginInput.Username)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				http.Error(w, err.Error(), http.StatusUnauthorized)
 				return
 			}
 
