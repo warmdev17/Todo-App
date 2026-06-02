@@ -169,6 +169,7 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 			for index, task := range tasks {
 				if task.ID == id {
+					w.WriteHeader(http.StatusOK)
 					if err := json.NewEncoder(w).Encode(map[string]any{
 						"success": true,
 						"data":    task,
@@ -177,6 +178,7 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 						return
 					}
 					tasks = append(tasks[:index], tasks[index+1:]...)
+					return
 				}
 			}
 		}
