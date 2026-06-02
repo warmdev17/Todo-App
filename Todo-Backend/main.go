@@ -178,7 +178,6 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 						return
 					}
 					tasks = append(tasks[:index], tasks[index+1:]...)
-					return
 				}
 			}
 		}
@@ -266,7 +265,20 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		var user User
-		if LoginInput.Email != nil {
+
+		if isBlankPointer(LoginInput.Password) {
+			http.Error(w, "password is required", http.StatusBadRequest)
+			return
+		}
+
+		hasEmail := !isBlankPointer(LoginInput.Email)
+		hasUsername := !isBlankPointer(LoginInput.Username)
+
+		if hasEmail == hasUsername {
+			http.Error(w, "use either username or email", http.StatusBadRequest)
+			return
+		}
+		if hasEmail {
 			log.Println("Email login")
 			user, err = findUserByEmail(*LoginInput.Email)
 			if err != nil {
@@ -298,9 +310,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
-		}
-
-		if LoginInput.Username != nil {
+		} else {
 			log.Println("Username login")
 			user, err = findUserByUsername(*LoginInput.Username)
 			if err != nil {
@@ -335,7 +345,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 			}
 		}
-
 	}
 }
 
