@@ -209,7 +209,7 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 						tasks[index].Completed = *input.Completed
 					}
 
-					w.WriteHeader(http.StatusCreated)
+					w.WriteHeader(http.StatusAccepted)
 					if err := json.NewEncoder(w).Encode(map[string]any{
 						"success": true,
 						"data":    tasks[index],
