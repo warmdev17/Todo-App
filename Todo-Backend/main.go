@@ -196,10 +196,17 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			trimmedTitle := strings.TrimSpace(*input.Title)
+
+			if trimmedTitle == "" {
+				writeError(w, http.StatusBadRequest, "Title cannot be empty")
+				return
+			}
+
 			for index, task := range tasks {
 				if task.ID == id {
 					if input.Title != nil {
-						tasks[index].Title = strings.TrimSpace(*input.Title)
+						tasks[index].Title = trimmedTitle
 					}
 
 					if input.Completed != nil {
