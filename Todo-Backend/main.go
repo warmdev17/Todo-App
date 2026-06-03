@@ -364,15 +364,14 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		trimmedEmail := strings.TrimSpace(*input.Email)
-		trimmedUsername := strings.TrimSpace(*input.Username)
-
 		errs := validateCreateUser(input)
-
 		if len(errs) > 0 {
 			writeError(w, http.StatusBadRequest, "Invalid JSON Body")
 			return
 		}
+
+		trimmedEmail := strings.TrimSpace(*input.Email)
+		trimmedUsername := strings.TrimSpace(*input.Username)
 
 		if _, err := findUserByEmail(trimmedEmail); err == nil {
 			writeError(w, http.StatusBadRequest, "email already exists")
