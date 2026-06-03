@@ -278,10 +278,17 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if LoginInput.Email == nil &&
+			LoginInput.Username == nil &&
+			LoginInput.Password == nil {
+			writeError(w, http.StatusBadRequest, "request body is required")
+			return
+		}
+
 		var user User
 
 		if isBlankPointer(LoginInput.Password) {
-			http.Error(w, "password is required", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "password is required")
 			return
 		}
 
@@ -289,7 +296,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		hasUsername := !isBlankPointer(LoginInput.Username)
 
 		if hasEmail == hasUsername {
-			http.Error(w, "use either username or email", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "use either username or email")
 			return
 		}
 		if hasEmail {
