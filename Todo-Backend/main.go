@@ -280,50 +280,40 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if hasEmail {
-			log.Println("Email login")
 			user, err = findUserByEmail(*LoginInput.Email)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusUnauthorized)
 				return
 			}
 			if user.Password == *LoginInput.Password {
-				w.WriteHeader(http.StatusCreated)
-				err := json.NewEncoder(w).Encode(map[string]any{
+				writeJSON(w, http.StatusOK, map[string]any{
 					"success": true,
 					"data": map[string]any{
 						"token":    "fake-token-1",
 						"username": user.Username,
 					},
 				})
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
+				return
 			} else {
 				writeError(w, http.StatusUnauthorized, "Invalid email or password")
 				return
 			}
 		} else {
-			log.Println("Username login")
 			user, err = findUserByUsername(*LoginInput.Username)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusUnauthorized)
+				writeError(w, http.StatusUnauthorized, err.Error())
 				return
 			}
 
 			if user.Password == *LoginInput.Password {
-				w.WriteHeader(http.StatusOK)
-				err := json.NewEncoder(w).Encode(map[string]any{
+				writeJSON(w, http.StatusOK, map[string]any{
 					"success": true,
 					"data": map[string]any{
 						"token":    "fake-token-1",
 						"username": user.Username,
 					},
 				})
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
+				return
 			} else {
 				writeError(w, http.StatusUnauthorized, "Invalid username or password")
 				return
