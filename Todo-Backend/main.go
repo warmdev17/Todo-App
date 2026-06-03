@@ -15,6 +15,7 @@ import (
 
 type Task struct {
 	ID        int    `json:"id"`
+	UserID    int    `json:"userId"`
 	Title     string `json:"title"`
 	Completed bool   `json:"completed"`
 }
@@ -40,8 +41,9 @@ type RegisterInput struct {
 }
 
 var tasks = []Task{
-	{ID: 0, Title: "Learn Go net/http", Completed: false},
-	{ID: 1, Title: "Build TODO REST API app", Completed: false},
+	{ID: 1, UserID: 1, Title: "Learn Go net/http", Completed: false},
+	{ID: 2, UserID: 1, Title: "Learn Gin framework", Completed: false},
+	{ID: 3, UserID: 2, Title: "Build TODO REST API app", Completed: false},
 }
 
 var users = []User{}
@@ -72,14 +74,24 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
-		err := json.NewEncoder(w).Encode(map[string]any{
-			"success": true,
-			"data":    tasks,
-		})
+		userID, err := getCurrentUserID(r)
 		if err != nil {
-			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
+		var userTask []Task
+
+		for _, task := range tasks {
+			if task.ID == userID {
+				userTask = append(userTask, task)
+			}
+		}
+
+		writeJSON(w, http.StatusAccepted, map[string]any{
+			"success": true,
+			"data":    userTask,
+		})
 		return
 	}
 
@@ -295,6 +307,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 					"success": true,
 					"data": map[string]any{
 						"token":    "fake-token-1",
+						"userId":   user.ID,
 						"username": user.Username,
 					},
 				})
@@ -316,6 +329,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 					"success": true,
 					"data": map[string]any{
 						"token":    "fake-token-1",
+						"userId":   user.ID,
 						"username": user.Username,
 					},
 				})
@@ -517,4 +531,14 @@ func writeError(w http.ResponseWriter, statusCode int, message string) {
 		"data":    nil,
 		"errors":  message,
 	})
+}
+
+func getCurrentUserID(r *http.Request) (int, error) {
+	userIDText := r.Header.Get("X-User-ID")
+
+	if userIDText == "" {
+		return 0, errors.New("missing user id")
+	}
+
+	return strconv.Atoi(userIDText)
 }
