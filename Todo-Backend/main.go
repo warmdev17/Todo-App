@@ -347,6 +347,9 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		trimmedEmail := strings.TrimSpace(*input.Email)
+		trimmedUsername := strings.TrimSpace(*input.Username)
+
 		errs := validateCreateUser(input)
 
 		if len(errs) > 0 {
@@ -354,15 +357,24 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if _, err := findUserByEmail(trimmedEmail); err != nil {
+			writeError(w, http.StatusBadRequest, "email already exists")
+			return
+		}
+
+		if _, err := findUserByUsername(trimmedUsername); err != nil {
+			writeError(w, http.StatusBadRequest, "username already exists")
+			return
+		}
+
 		newUser := User{
 			ID:       nextUserID(),
-			Username: strings.TrimSpace(*input.Username),
-			Email:    strings.TrimSpace(*input.Email),
+			Username: trimmedUsername,
+			Email:    trimmedEmail,
 			Password: *input.Password,
 		}
 		users = append(users, newUser)
-		w.WriteHeader(http.StatusCreated)
-		err := json.NewEncoder(w).Encode(map[string]any{
+		writeJSON(w, http.StatusCreated, map[string]any{
 			"success": true,
 			"data": AuthUser{
 				ID:       newUser.ID,
@@ -370,10 +382,6 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 				Username: newUser.Username,
 			},
 		})
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
 	}
 }
 
