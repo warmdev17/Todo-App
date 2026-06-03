@@ -166,17 +166,16 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 			for index, task := range tasks {
 				if task.ID == id {
-					w.WriteHeader(http.StatusOK)
-					if err := json.NewEncoder(w).Encode(map[string]any{
+					tasks = append(tasks[:index], tasks[index+1:]...)
+					writeJSON(w, http.StatusOK, map[string]any{
 						"success": true,
 						"data":    task,
-					}); err != nil {
-						http.Error(w, "Invalid JSON", http.StatusBadRequest)
-						return
-					}
-					tasks = append(tasks[:index], tasks[index+1:]...)
+					})
+					return
 				}
 			}
+			writeError(w, http.StatusNotFound, "Task not found")
+			return
 		}
 	case http.MethodPatch:
 		{
