@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Task struct {
@@ -19,10 +20,10 @@ type Task struct {
 }
 
 type User struct {
-	ID       int    `json:"id"`
-	Email    string `json:"email"`
-	Username string `json:"username"`
-	Password string `json:"-"`
+	ID           int    `json:"id"`
+	Email        string `json:"email"`
+	Username     string `json:"username"`
+	HashPassword string `json:"-"`
 }
 
 type AuthUser struct {
@@ -43,9 +44,7 @@ var tasks = []Task{
 	{ID: 1, Title: "Build TODO REST API app", Completed: false},
 }
 
-var users = []User{
-	{0, "warmdevofficial@gmail.com", "warmdev", "Warmdev17@todo"},
-}
+var users = []User{}
 
 func main() {
 	err := godotenv.Load()
@@ -196,11 +195,13 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			trimmedTitle := strings.TrimSpace(*input.Title)
-
-			if trimmedTitle == "" {
-				writeError(w, http.StatusBadRequest, "Title cannot be empty")
-				return
+			var trimmedTitle string
+			if input.Title != nil {
+				trimmedTitle = strings.TrimSpace(*input.Title)
+				if trimmedTitle == "" {
+					writeError(w, http.StatusBadRequest, "Title cannot be empty")
+					return
+				}
 			}
 
 			for index, task := range tasks {
@@ -282,10 +283,14 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		if hasEmail {
 			user, err = findUserByEmail(*LoginInput.Email)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusUnauthorized)
+				writeError(w, http.StatusUnauthorized, "Invalid credentials")
 				return
 			}
-			if user.Password == *LoginInput.Password {
+			err := bcrypt.CompareHashAndPassword([]byte(user.HashPassword), []byte(*LoginInput.Password))
+			if err != nil {
+				writeError(w, http.StatusUnauthorized, "Invalid email or password")
+				return
+			} else {
 				writeJSON(w, http.StatusOK, map[string]any{
 					"success": true,
 					"data": map[string]any{
@@ -293,19 +298,20 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 						"username": user.Username,
 					},
 				})
-				return
-			} else {
-				writeError(w, http.StatusUnauthorized, "Invalid email or password")
 				return
 			}
 		} else {
 			user, err = findUserByUsername(*LoginInput.Username)
 			if err != nil {
-				writeError(w, http.StatusUnauthorized, err.Error())
+				writeError(w, http.StatusUnauthorized, "Invalid credentials")
 				return
 			}
 
-			if user.Password == *LoginInput.Password {
+			err := bcrypt.CompareHashAndPassword([]byte(user.HashPassword), []byte(*LoginInput.Password))
+			if err != nil {
+				writeError(w, http.StatusUnauthorized, "Invalid username or password")
+				return
+			} else {
 				writeJSON(w, http.StatusOK, map[string]any{
 					"success": true,
 					"data": map[string]any{
@@ -313,9 +319,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 						"username": user.Username,
 					},
 				})
-				return
-			} else {
-				writeError(w, http.StatusUnauthorized, "Invalid username or password")
 				return
 			}
 		}
@@ -357,21 +360,28 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if _, err := findUserByEmail(trimmedEmail); err != nil {
+		if _, err := findUserByEmail(trimmedEmail); err == nil {
 			writeError(w, http.StatusBadRequest, "email already exists")
 			return
 		}
 
-		if _, err := findUserByUsername(trimmedUsername); err != nil {
+		if _, err := findUserByUsername(trimmedUsername); err == nil {
 			writeError(w, http.StatusBadRequest, "username already exists")
 			return
 		}
 
+		hashPassword, err := bcrypt.GenerateFromPassword([]byte(*input.Password), bcrypt.DefaultCost)
+		log.Println(string(hashPassword))
+		if err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
 		newUser := User{
-			ID:       nextUserID(),
-			Username: trimmedUsername,
-			Email:    trimmedEmail,
-			Password: *input.Password,
+			ID:           nextUserID(),
+			Username:     trimmedUsername,
+			Email:        trimmedEmail,
+			HashPassword: string(hashPassword),
 		}
 		users = append(users, newUser)
 		writeJSON(w, http.StatusCreated, map[string]any{
