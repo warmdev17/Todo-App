@@ -103,14 +103,14 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 		err := json.NewDecoder(r.Body).Decode(&input)
 		if err != nil {
-			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "Invalid JSON")
 			return
 		}
 
 		trimmedTitle := strings.TrimSpace(input.Title)
 
 		if trimmedTitle == "" {
-			http.Error(w, "Title is required", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "Title is required")
 			return
 		}
 
@@ -121,19 +121,14 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		tasks = append(tasks, newTask)
-		w.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(w).Encode(map[string]any{
+		writeJSON(w, http.StatusCreated, map[string]any{
 			"success": true,
 			"data":    newTask,
-		}); err != nil {
-			http.Error(w, "Invalid JSON", http.StatusBadRequest)
-			return
-		}
-
+		})
 		return
 	}
 
-	http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 }
 
 func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
@@ -145,25 +140,21 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 			id, err := getIDFromPath(r)
 			if err != nil {
-				http.Error(w, "Invalid task ID", http.StatusBadRequest)
+				writeError(w, http.StatusBadRequest, "Invalid task ID")
 				return
 			}
 
 			task, err := getTaskByID(id)
 			if err != nil {
-				http.Error(w, "Task not found", http.StatusNotFound)
+				writeError(w, http.StatusNotFound, "Task not found")
 				return
 			}
 
-			err = json.NewEncoder(w).Encode(map[string]any{
+			writeJSON(w, http.StatusOK, map[string]any{
 				"success": true,
 				"data":    task,
 			})
-			if err != nil {
-				http.Error(w, "Invalid JSON", http.StatusBadRequest)
-				return
-			}
-
+			return
 		}
 	case http.MethodDelete:
 		{
@@ -171,7 +162,7 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 			id, err := getIDFromPath(r)
 			if err != nil {
-				http.Error(w, "Invalid task id", http.StatusBadRequest)
+				writeError(w, http.StatusBadRequest, "Invalid task id")
 				return
 			}
 
@@ -197,13 +188,13 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 			log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 			id, err := getIDFromPath(r)
 			if err != nil {
-				http.Error(w, "Invalid task id", http.StatusBadRequest)
+				writeError(w, http.StatusBadRequest, "Invalid task id")
 				return
 			}
 
 			err = json.NewDecoder(r.Body).Decode(&input)
 			if err != nil {
-				http.Error(w, "Invalid JSON", http.StatusBadRequest)
+				writeError(w, http.StatusBadRequest, "Invalid JSON")
 				return
 			}
 
@@ -226,15 +217,10 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 						tasks[index].Completed = *input.Completed
 					}
 
-					w.WriteHeader(http.StatusAccepted)
-					if err := json.NewEncoder(w).Encode(map[string]any{
+					writeJSON(w, http.StatusAccepted, map[string]any{
 						"success": true,
 						"data":    tasks[index],
-					}); err != nil {
-						http.Error(w, "Invalid JSON", http.StatusBadRequest)
-						return
-					}
-
+					})
 					return
 
 				}
@@ -249,7 +235,7 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	default:
 		{
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 			return
 		}
 	}
@@ -274,7 +260,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 		err := json.NewDecoder(r.Body).Decode(&LoginInput)
 		if err != nil {
-			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "Invalid JSON")
 			return
 		}
 
@@ -359,7 +345,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
 		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-			http.Error(w, "Invalid JSON Body", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "Invalid JSON")
 			return
 		}
 
@@ -367,7 +353,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 			input.Email == nil &&
 			input.Password == nil &&
 			input.ConfirmPassword == nil {
-			http.Error(w, "request body is required", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "request body is required")
 			return
 		}
 
