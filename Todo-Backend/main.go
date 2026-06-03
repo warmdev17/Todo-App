@@ -83,7 +83,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		var userTask []Task
 
 		for _, task := range tasks {
-			if task.ID == userID {
+			if task.UserID == userID {
 				userTask = append(userTask, task)
 			}
 		}
