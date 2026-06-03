@@ -1,0 +1,158 @@
+@baseUrl = http://localhost:8080
+
+
+### register success
+
+POST {{baseUrl}}/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "confirmPassword": "maiphuong",
+  "email": "hoangmaiphuongtin@gmail.com",
+  "password": "maiphuong",
+  "username": "maiphuong"
+}
+
+### register missing fields
+
+POST {{baseUrl}}/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "username": "hihi"
+}
+
+### register empty fields
+
+POST {{baseUrl}}/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "confirmPassword": "",
+  "email": "",
+  "password": "",
+  "username": ""
+}
+
+### register password mismatch
+
+POST {{baseUrl}}/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "confirmPassword": "654321",
+  "email": "abc@gmail.com",
+  "password": "123456",
+  "username": "abc"
+}
+
+### register duplicate email
+
+POST {{baseUrl}}/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "confirmPassword": "123456",
+  "email": "hoangmaiphuongtin@gmail.com",
+  "password": "123456",
+  "username": "another"
+}
+
+### register duplicate username
+
+POST {{baseUrl}}/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "username": "maiphuong",
+  "email": "another@gmail.com",
+  "password": "123456",
+  "confirmPassword": "123456"
+}
+
+### register invalid json
+
+POST {{baseUrl}}/register HTTP/1.1
+Content-Type: application/json
+
+abc
+
+### login by username
+
+POST {{baseUrl}}/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "username": "maiphuong",
+  "password": "maiphuong"
+}
+
+> {%
+  const body = response.body;
+  
+  if (!body.success) {
+    client.log("Login failed: " + body.errors);
+  } else {
+    client.global.set("USER_ID", String(body.data.userId));
+    client.global.set("USERNAME", body.data.username);
+    client.global.set("TOKEN", body.data.token);
+  
+    client.log("Saved USER_ID = " + body.data.userId);
+  }
+%}
+
+### login by email
+
+POST {{baseUrl}}/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "hoangmaiphuongtin@gmail.com",
+  "password": "maiphuong"
+}
+
+> {%
+  const body = response.body;
+  
+  if (!body.success) {
+    client.log("Login failed: " + body.errors);
+  } else {
+    client.global.set("USER_ID", String(body.data.userId));
+    client.global.set("USERNAME", body.data.username);
+    client.global.set("TOKEN", body.data.token);
+  
+    client.log("Saved USER_ID = " + body.data.userId);
+  }
+%}
+
+### login missing fields
+
+POST {{baseUrl}}/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "username": "maiphuong"
+}
+
+### login empty fields
+
+POST {{baseUrl}}/login HTTP/1.1
+Content-Type: application/json
+
+{}
+
+### login wrong credentials
+
+POST {{baseUrl}}/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "password": "wrongpassword",
+  "username": "maiphuong"
+}
+
+### login invalid json
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+abc
