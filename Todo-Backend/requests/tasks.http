@@ -1,0 +1,45 @@
+@baseUrl = http://localhost:8080
+
+### get all tasks
+
+GET {{baseUrl}}/tasks HTTP/1.1
+X-User-ID: {{USER_ID}}
+
+### get all task without X-USER-ID
+
+GET {{baseUrl}}/tasks HTTP/1.1
+
+### add new task
+
+POST {{baseUrl}}/tasks HTTP/1.1
+Content-Type: application/json
+X-User-ID: {{USER_ID}}
+
+{
+  "title": "xin chao"
+}
+
+### add new task missing X-USER-ID
+
+POST {{baseUrl}}/tasks HTTP/1.1
+Content-Type: application/json
+
+{
+  "title": "Nhom nhom"
+}
+
+### add new task missing title
+
+POST {{baseUrl}}/tasks HTTP/1.1
+Content-Type: application/json
+X-USER-ID: {{USER_ID}}
+
+{}
+
+
+### add new task invalid JSON
+POST {{baseUrl}}/tasks
+Content-Type: application/json
+X-USER-ID: {{USER_ID}}
+
+leuleu
