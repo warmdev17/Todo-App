@@ -75,9 +75,9 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	currentUser, err := getCurrentUser(r)
 	if r.Method == http.MethodGet {
 		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
-		user, err := getCurrentUser(r)
 		if err != nil {
 			writeError(w, http.StatusUnauthorized, err.Error())
 			return
@@ -86,7 +86,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		var userTask []Task
 
 		for _, task := range tasks {
-			if task.UserID == user.ID {
+			if task.UserID == currentUser.ID {
 				userTask = append(userTask, task)
 			}
 		}
@@ -104,7 +104,6 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
-		user, err := getCurrentUser(r)
 		if err != nil {
 			writeError(w, http.StatusUnauthorized, err.Error())
 			return
@@ -126,7 +125,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		newTask := Task{
 			ID:        nextTaskID(),
 			Title:     trimmedTitle,
-			UserID:    user.ID,
+			UserID:    currentUser.ID,
 			Completed: false,
 		}
 
