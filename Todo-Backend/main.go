@@ -505,7 +505,7 @@ func validateCreateUser(input RegisterInput) []string {
 func setCORSHeader(w http.ResponseWriter, methods string) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", methods)
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-User-ID")
 	w.Header().Set("Content-Type", "application/json")
 }
 
