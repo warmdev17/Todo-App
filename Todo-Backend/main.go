@@ -76,7 +76,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 		userID, err := getCurrentUserID(r)
 		if err != nil {
-			writeError(w, http.StatusBadRequest, err.Error())
+			writeError(w, http.StatusUnauthorized, err.Error())
 			return
 		}
 
