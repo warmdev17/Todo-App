@@ -79,7 +79,12 @@ function App() {
   function handleLogout() {
     localStorage.removeItem("token");
     localStorage.removeItem("currentUser");
+    localStorage.removeItem("userId");
+
     setCurrentUser(null);
+    setTodos([]);
+    setTitle("");
+    cancelEditTodo();
   }
 
   function editTodo(todo: Todo) {
@@ -92,13 +97,11 @@ function App() {
     setEditingTitle("");
   }
 
-  async function getTodos() {
-    const response = await fetch(`${apiUrl}/tasks`);
-    const result: ApiResponse<Todo[]> = await response.json();
-
-    if (result.success) {
-      setTodos(result.data);
-    }
+  function getAuthHeader(): HeadersInit {
+    return {
+      "Content-Type": "application/json",
+      "X-User-ID": localStorage.getItem("userId") ?? "",
+    };
   }
 
   async function saveEditTodo(id: number) {
@@ -107,9 +110,7 @@ function App() {
 
     const response = await fetch(`${apiUrl}/tasks/${id}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeader(),
       body: JSON.stringify({ title: trimmedTitle }),
     });
 
@@ -131,9 +132,7 @@ function App() {
 
     const response = await fetch(`${apiUrl}/tasks`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeader(),
       body: JSON.stringify({ title: trimmedTitle }),
     });
 
@@ -148,6 +147,7 @@ function App() {
   async function handleDeleteTodo(id: number) {
     const response = await fetch(`${apiUrl}/tasks/${id}`, {
       method: "DELETE",
+      headers: getAuthHeader(),
     });
 
     const result: ApiResponse<Todo> = await response.json();
@@ -160,9 +160,7 @@ function App() {
   async function handleToggleCompleted(id: number, isChecked: boolean) {
     const response = await fetch(`${apiUrl}/tasks/${id}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: getAuthHeader(),
       body: JSON.stringify({ completed: isChecked }),
     });
 
@@ -191,8 +189,18 @@ function App() {
       return;
     }
 
+    const userId = result.data.userId ?? result.data.id;
+
+    if (!userId) {
+      setAuthError("Login response missing user id");
+      return;
+    }
+
     localStorage.setItem("token", result.data.token);
     localStorage.setItem("currentUser", result.data.username);
+    localStorage.setItem("userId", String(userId));
+
+    setAuthError("");
     setCurrentUser(result.data.username);
     closeAuthModal();
   }
@@ -259,9 +267,41 @@ function App() {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    getTodos();
-  }, []);
+    if (!currentUser) return;
+
+    let isCancelled = false;
+
+    void fetch(`${apiUrl}/tasks`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "X-User-ID": localStorage.getItem("userId") ?? "",
+      },
+    })
+      .then(async (response) => {
+        const result: ApiResponse<Todo[]> = await response.json();
+
+        if (!response.ok || !result.success) {
+          return [];
+        }
+
+        return result.data;
+      })
+      .then((nextTodos) => {
+        if (!isCancelled) {
+          setTodos(nextTodos);
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setTodos([]);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentUser]);
 
   return (
     <main className="app-shell">
