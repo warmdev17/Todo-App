@@ -77,7 +77,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
-		userID, err := getCurrentUserID(r)
+		user, err := getCurrentUser(r)
 		if err != nil {
 			writeError(w, http.StatusUnauthorized, err.Error())
 			return
@@ -86,7 +86,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		var userTask []Task
 
 		for _, task := range tasks {
-			if task.UserID == userID {
+			if task.UserID == user.ID {
 				userTask = append(userTask, task)
 			}
 		}
@@ -104,13 +104,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
-		requestUserID, err := getCurrentUserID(r)
-		if err != nil {
-			writeError(w, http.StatusUnauthorized, "missing user id")
-			return
-		}
-
-		user, err := getUserByID(requestUserID)
+		user, err := getCurrentUser(r)
 		if err != nil {
 			writeError(w, http.StatusUnauthorized, err.Error())
 			return
@@ -559,4 +553,18 @@ func getUserByID(id int) (User, error) {
 	}
 
 	return User{}, errors.New("user not found")
+}
+
+func getCurrentUser(r *http.Request) (User, error) {
+	userID, err := getCurrentUserID(r)
+	if err != nil {
+		return User{}, err
+	}
+
+	user, err := getUserByID(userID)
+	if err != nil {
+		return User{}, err
+	}
+
+	return user, nil
 }
