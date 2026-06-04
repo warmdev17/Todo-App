@@ -46,7 +46,10 @@ var tasks = []Task{
 	{ID: 3, UserID: 2, Title: "Build TODO REST API app", Completed: false},
 }
 
-var users = []User{}
+var users = []User{
+	{1, "hoangmaiphuongtin@gmail.com", "maiphuong", "$2a$10$08/9rz35z3xJ0X0mqikMf.1cgPRiC6Vhi6A7W4dbRixDAtViOKBd."},
+	{2, "warmdevofficial@gmail.com", "warmdev", "$2a$10$BVWV36D.NghpfB9O5gd4muhxzsiXXxTaAnGt6tFA/gkf2xcDkfoN6"},
+}
 
 func main() {
 	err := godotenv.Load()
@@ -97,26 +100,39 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodPost {
 		var input struct {
-			Title string `json:"title"`
+			Title *string `json:"title"`
 		}
 
 		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
-		err := json.NewDecoder(r.Body).Decode(&input)
+		requestUserID, err := getCurrentUserID(r)
+		if err != nil {
+			writeError(w, http.StatusUnauthorized, "missing user id")
+			return
+		}
+
+		user, err := getUserByID(requestUserID)
+		if err != nil {
+			writeError(w, http.StatusUnauthorized, err.Error())
+			return
+		}
+
+		err = json.NewDecoder(r.Body).Decode(&input)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, "Invalid JSON")
 			return
 		}
 
-		trimmedTitle := strings.TrimSpace(input.Title)
-
-		if trimmedTitle == "" {
+		if isBlankPointer(input.Title) {
 			writeError(w, http.StatusBadRequest, "Title is required")
 			return
 		}
 
+		trimmedTitle := strings.TrimSpace(*input.Title)
+
 		newTask := Task{
 			ID:        nextTaskID(),
 			Title:     trimmedTitle,
+			UserID:    user.ID,
 			Completed: false,
 		}
 
@@ -533,4 +549,14 @@ func getCurrentUserID(r *http.Request) (int, error) {
 	}
 
 	return strconv.Atoi(userIDText)
+}
+
+func getUserByID(id int) (User, error) {
+	for _, user := range users {
+		if user.ID == id {
+			return user, nil
+		}
+	}
+
+	return User{}, errors.New("user not found")
 }
