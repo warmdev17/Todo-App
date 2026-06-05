@@ -385,7 +385,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 
 		errs := validateCreateUser(input)
 		if len(errs) > 0 {
-			writeError(w, http.StatusBadRequest, "Invalid JSON Body")
+			writeValidationError(w, http.StatusBadRequest, errs)
 			return
 		}
 
@@ -539,6 +539,14 @@ func writeError(w http.ResponseWriter, statusCode int, message string) {
 		"success": false,
 		"data":    nil,
 		"errors":  message,
+	})
+}
+
+func writeValidationError(w http.ResponseWriter, statusCode int, errors []string) {
+	writeJSON(w, statusCode, map[string]any{
+		"success": false,
+		"data":    nil,
+		"errors":  errors,
 	})
 }
 
