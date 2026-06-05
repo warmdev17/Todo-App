@@ -77,7 +77,6 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	currentUser, statusCode, err := getCurrentUser(r)
 	if r.Method == http.MethodGet {
-		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 		if err != nil {
 			writeError(w, statusCode, err.Error())
 			return
@@ -103,7 +102,6 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			Title *string `json:"title"`
 		}
 
-		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 		if err != nil {
 			writeError(w, http.StatusUnauthorized, err.Error())
 			return
@@ -144,7 +142,6 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 	setCORSHeader(w, "GET, DELETE, PATCH, OPTIONS")
 
 	if r.Method == http.MethodOptions {
-		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
@@ -157,7 +154,6 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		{
-			log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 			id, err := getTaskIDFromPath(r)
 			if err != nil {
 				writeError(w, http.StatusBadRequest, "Invalid task ID")
@@ -177,8 +173,6 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	case http.MethodDelete:
 		{
-			log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
-
 			id, err := getTaskIDFromPath(r)
 			if err != nil {
 				writeError(w, http.StatusBadRequest, "Invalid task id")
@@ -206,7 +200,6 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 				Completed *bool   `json:"completed"`
 				Title     *string `json:"title"`
 			}
-			log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 
 			err = json.NewDecoder(r.Body).Decode(&input)
 			if err != nil {
@@ -246,7 +239,6 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 			if input.Completed != nil {
 				tasks[index].Completed = *input.Completed
-				log.Println(tasks[index])
 			}
 
 			writeJSON(w, http.StatusOK, map[string]any{
@@ -275,13 +267,11 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodOptions {
-		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
 	if r.Method == http.MethodPost {
-		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 		err := json.NewDecoder(r.Body).Decode(&LoginInput)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, "Invalid JSON")
@@ -371,7 +361,6 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 	var input RegisterInput
 
 	if r.Method == http.MethodPost {
-		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 			writeError(w, http.StatusBadRequest, "Invalid JSON")
 			return
