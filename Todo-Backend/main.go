@@ -266,7 +266,7 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	setCORSHeader(w, "GET, POST, OPTIONS")
+	setCORSHeader(w, "POST, OPTIONS")
 
 	var LoginInput struct {
 		Email    *string `json:"email"`
@@ -354,6 +354,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+
+	writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
@@ -422,6 +424,8 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 			},
 		})
 	}
+
+	writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 }
 
 func getTaskIDFromPath(r *http.Request) (int, error) {
