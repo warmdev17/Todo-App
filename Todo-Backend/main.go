@@ -75,11 +75,11 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	currentUser, err := getCurrentUser(r)
+	currentUser, statusCode, err := getCurrentUser(r)
 	if r.Method == http.MethodGet {
 		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 		if err != nil {
-			writeError(w, http.StatusUnauthorized, err.Error())
+			writeError(w, statusCode, err.Error())
 			return
 		}
 
@@ -91,7 +91,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		writeJSON(w, http.StatusAccepted, map[string]any{
+		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
 			"data":    userTask,
 		})
@@ -143,22 +143,32 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 	setCORSHeader(w, "GET, DELETE, PATCH, OPTIONS")
 
+	if r.Method == http.MethodOptions {
+		log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	currentUser, statusCode, err := getCurrentUser(r)
+	if err != nil {
+		writeError(w, statusCode, err.Error())
+		return
+	}
 	switch r.Method {
 	case http.MethodGet:
 		{
 			log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
-			id, err := getIDFromPath(r)
+			id, err := getTaskIDFromPath(r)
 			if err != nil {
 				writeError(w, http.StatusBadRequest, "Invalid task ID")
 				return
 			}
 
-			task, err := getTaskByID(id)
+			task, err := getTaskByIDAndUserID(id, currentUser.ID)
 			if err != nil {
-				writeError(w, http.StatusNotFound, "Task not found")
+				writeError(w, http.StatusNotFound, err.Error())
 				return
 			}
-
 			writeJSON(w, http.StatusOK, map[string]any{
 				"success": true,
 				"data":    task,
@@ -169,23 +179,25 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 		{
 			log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 
-			id, err := getIDFromPath(r)
+			id, err := getTaskIDFromPath(r)
 			if err != nil {
 				writeError(w, http.StatusBadRequest, "Invalid task id")
 				return
 			}
 
-			for index, task := range tasks {
-				if task.ID == id {
-					tasks = append(tasks[:index], tasks[index+1:]...)
-					writeJSON(w, http.StatusOK, map[string]any{
-						"success": true,
-						"data":    task,
-					})
-					return
-				}
+			index, err := getTaskIndexByIDAndUserID(id, currentUser.ID)
+			if err != nil {
+				writeError(w, http.StatusNotFound, err.Error())
+				return
 			}
-			writeError(w, http.StatusNotFound, "Task not found")
+
+			deletedTask := tasks[index]
+			tasks = append(tasks[:index], tasks[index+1:]...)
+
+			writeJSON(w, http.StatusOK, map[string]any{
+				"success": true,
+				"data":    deletedTask,
+			})
 			return
 		}
 	case http.MethodPatch:
@@ -195,7 +207,13 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 				Title     *string `json:"title"`
 			}
 			log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
-			id, err := getIDFromPath(r)
+
+			if input.Title == nil && input.Completed == nil {
+				writeError(w, http.StatusBadRequest, "No fields to update")
+				return
+			}
+
+			id, err := getTaskIDFromPath(r)
 			if err != nil {
 				writeError(w, http.StatusBadRequest, "Invalid task id")
 				return
@@ -216,31 +234,27 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			for index, task := range tasks {
-				if task.ID == id {
-					if input.Title != nil {
-						tasks[index].Title = trimmedTitle
-					}
-
-					if input.Completed != nil {
-						tasks[index].Completed = *input.Completed
-					}
-
-					writeJSON(w, http.StatusAccepted, map[string]any{
-						"success": true,
-						"data":    tasks[index],
-					})
-					return
-
-				}
+			index, err := getTaskIndexByIDAndUserID(id, currentUser.ID)
+			if err != nil {
+				writeError(w, http.StatusNotFound, err.Error())
+				return
 			}
 
-		}
-	case http.MethodOptions:
-		{
-			log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
-			w.WriteHeader(http.StatusNoContent)
+			if input.Title != nil {
+				tasks[index].Title = trimmedTitle
+			}
+
+			if input.Completed != nil {
+				tasks[index].Completed = *input.Completed
+			}
+
+			writeJSON(w, http.StatusOK, map[string]any{
+				"success": true,
+				"data":    tasks[index],
+			})
+
 			return
+
 		}
 	default:
 		{
@@ -386,7 +400,6 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		hashPassword, err := bcrypt.GenerateFromPassword([]byte(*input.Password), bcrypt.DefaultCost)
-		log.Println(string(hashPassword))
 		if err != nil {
 			writeError(w, http.StatusBadRequest, err.Error())
 			return
@@ -410,17 +423,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getTaskByID(id int) (Task, error) {
-	for _, task := range tasks {
-		if task.ID == id {
-			return task, nil
-		}
-	}
-
-	return Task{}, errors.New("task not found")
-}
-
-func getIDFromPath(r *http.Request) (int, error) {
+func getTaskIDFromPath(r *http.Request) (int, error) {
 	idText := strings.TrimPrefix(r.URL.Path, "/tasks/")
 	id, err := strconv.Atoi(idText)
 	if err != nil {
@@ -534,16 +537,6 @@ func writeError(w http.ResponseWriter, statusCode int, message string) {
 	})
 }
 
-func getCurrentUserID(r *http.Request) (int, error) {
-	userIDText := r.Header.Get("X-User-ID")
-
-	if userIDText == "" {
-		return 0, errors.New("missing user id")
-	}
-
-	return strconv.Atoi(userIDText)
-}
-
 func getUserByID(id int) (User, error) {
 	for _, user := range users {
 		if user.ID == id {
@@ -554,16 +547,40 @@ func getUserByID(id int) (User, error) {
 	return User{}, errors.New("user not found")
 }
 
-func getCurrentUser(r *http.Request) (User, error) {
-	userID, err := getCurrentUserID(r)
+func getCurrentUser(r *http.Request) (User, int, error) {
+	userIDText := r.Header.Get("X-User-ID")
+	if userIDText == "" {
+		return User{}, http.StatusUnauthorized, errors.New("missing user id")
+	}
+
+	userID, err := strconv.Atoi(userIDText)
 	if err != nil {
-		return User{}, err
+		return User{}, http.StatusBadRequest, errors.New("invalid user id")
 	}
 
 	user, err := getUserByID(userID)
 	if err != nil {
-		return User{}, err
+		return User{}, http.StatusUnauthorized, errors.New("unauthorized")
 	}
 
-	return user, nil
+	return user, http.StatusOK, nil
+}
+
+func getTaskByIDAndUserID(id int, userID int) (Task, error) {
+	for _, task := range tasks {
+		if task.ID == id && task.UserID == userID {
+			return task, nil
+		}
+	}
+	return Task{}, errors.New("Task not found")
+}
+
+func getTaskIndexByIDAndUserID(id int, userID int) (int, error) {
+	for index, task := range tasks {
+		if task.ID == id && task.UserID == userID {
+			return index, nil
+		}
+	}
+
+	return -1, errors.New("Task not found")
 }
