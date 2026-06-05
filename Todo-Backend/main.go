@@ -208,6 +208,12 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			log.Printf("method = %s, path = %s", r.Method, r.URL.Path)
 
+			err = json.NewDecoder(r.Body).Decode(&input)
+			if err != nil {
+				writeError(w, http.StatusBadRequest, "Invalid JSON")
+				return
+			}
+
 			if input.Title == nil && input.Completed == nil {
 				writeError(w, http.StatusBadRequest, "No fields to update")
 				return
@@ -216,12 +222,6 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 			id, err := getTaskIDFromPath(r)
 			if err != nil {
 				writeError(w, http.StatusBadRequest, "Invalid task id")
-				return
-			}
-
-			err = json.NewDecoder(r.Body).Decode(&input)
-			if err != nil {
-				writeError(w, http.StatusBadRequest, "Invalid JSON")
 				return
 			}
 
@@ -246,6 +246,7 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 			if input.Completed != nil {
 				tasks[index].Completed = *input.Completed
+				log.Println(tasks[index])
 			}
 
 			writeJSON(w, http.StatusOK, map[string]any{
