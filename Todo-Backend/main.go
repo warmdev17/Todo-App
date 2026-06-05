@@ -587,7 +587,7 @@ func getTaskByIDAndUserID(id int, userID int) (Task, error) {
 			return task, nil
 		}
 	}
-	return Task{}, errors.New("Task not found")
+	return Task{}, errors.New("task not found")
 }
 
 func getTaskIndexByIDAndUserID(id int, userID int) (int, error) {
@@ -597,5 +597,5 @@ func getTaskIndexByIDAndUserID(id int, userID int) (int, error) {
 		}
 	}
 
-	return -1, errors.New("Task not found")
+	return -1, errors.New("task not found")
 }
