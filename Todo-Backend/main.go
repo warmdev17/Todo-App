@@ -525,10 +525,15 @@ func setCORSHeader(w http.ResponseWriter, methods string) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", methods)
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-User-ID")
+}
+
+func setJSONHeader(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 }
 
 func writeJSON(w http.ResponseWriter, statusCode int, data any) {
+	setJSONHeader(w)
+
 	w.WriteHeader(statusCode)
 	err := json.NewEncoder(w).Encode(data)
 	if err != nil {
