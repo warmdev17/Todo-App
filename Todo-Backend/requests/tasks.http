@@ -1,5 +1,6 @@
 @baseUrl = http://localhost:8080
 
+
 ### get all tasks
 
 GET {{baseUrl}}/tasks HTTP/1.1
@@ -36,10 +37,184 @@ X-USER-ID: {{USER_ID}}
 
 {}
 
+### add new task empty title
 
-### add new task invalid JSON
-POST {{baseUrl}}/tasks
+POST {{baseUrl}}/tasks HTTP/1.1
 Content-Type: application/json
-X-USER-ID: {{USER_ID}}
+X-User-ID: {{USER_ID}}
 
-leuleu
+{
+  "title": ""
+}
+
+### add new task blank title
+
+POST {{baseUrl}}/tasks HTTP/1.1
+Content-Type: application/json
+X-User-ID: {{USER_ID}}
+
+{
+  "title": "   "
+}
+
+### add new task title wrong datatype
+
+POST {{baseUrl}}/tasks HTTP/1.1
+Content-Type: application/json
+X-User-ID: {{USER_ID}}
+
+{
+  "title": true
+}
+
+### edit tasks missing field
+
+PATCH {{baseUrl}}/tasks/1 HTTP/1.1
+Content-Type: application/json
+X-User-ID: {{USER_ID}}
+
+{}
+
+### edit task title
+
+PATCH {{baseUrl}}/tasks/1 HTTP/1.1
+Content-Type: application/json
+X-User-ID: {{USER_ID}}
+
+{
+  "title": "Learn Golang Vip Pro"
+}
+
+### edit task title with wrong datatype
+
+PATCH {{baseUrl}}/tasks/1 HTTP/1.1
+Content-Type: application/json
+X-User-ID: {{USER_ID}}
+
+{
+  "title": true
+}
+
+### edit task title missing X-User-ID
+
+PATCH {{baseUrl}}/tasks/1 HTTP/1.1
+Content-Type: application/json
+
+{
+  "title": "Learn Golang Vip Pro"
+}
+
+### edit task title with not exist user
+
+PATCH {{baseUrl}}/tasks/1 HTTP/1.1
+Content-Type: application/json
+X-User-ID: 100
+
+{
+  "title": "Learn Golang Vip Pro"
+}
+
+### edit atask title with not exist task
+
+PATCH {{baseUrl}}/tasks/100 HTTP/1.1
+Content-Type: application/json
+X-User-ID: {{USER_ID}}
+
+{
+  "title": "Learn Golang Vip Pro"
+}
+
+### edit task empty title
+
+PATCH {{baseUrl}}/tasks/1 HTTP/1.1
+Content-Type: application/json
+X-User-ID: {{USER_ID}}
+
+{
+  "title": ""
+}
+
+### edit task blank title
+
+PATCH {{baseUrl}}/tasks/1 HTTP/1.1
+Content-Type: application/json
+X-User-ID: {{USER_ID}}
+
+{
+  "title": "   "
+}
+
+### edit task status
+
+PATCH {{baseUrl}}/tasks/1 HTTP/1.1
+Content-Type: application/json
+X-User-ID: {{USER_ID}}
+
+{
+  "completed": true
+}
+
+### edit task status wit wrong datatype
+
+PATCH {{baseUrl}}/tasks/1 HTTP/1.1
+Content-Type: application/json
+X-User-ID: {{USER_ID}}
+
+{
+  "completed": "true"
+}
+
+### edit task title and status
+
+PATCH {{baseUrl}}/tasks/1 HTTP/1.1
+Content-Type: application/json
+X-User-ID: {{USER_ID}}
+
+{
+  "title": "Learn Go net/http",
+  "completed": true
+}
+
+### edit task owned by another user
+
+PATCH {{baseUrl}}/tasks/1 HTTP/1.1
+Content-Type: application/json
+X-User-ID: 2
+
+{
+  "title": "Hacked title"
+}
+
+### delete task
+
+DELETE {{baseUrl}}/tasks/1 HTTP/1.1
+X-User-ID: {{USER_ID}}
+
+### delete task missing X-User-ID
+
+DELETE {{baseUrl}}/tasks/1 HTTP/1.1
+
+### delete task not exist
+
+DELETE {{baseUrl}}/tasks/100 HTTP/1.1
+X-User-ID: {{USER_ID}}
+
+### delete task owned by another user
+
+DELETE {{baseUrl}}/tasks/1 HTTP/1.1
+X-User-ID: {{OTHER_USER_ID}}
+
+### method not allowed on tasks
+
+PUT {{baseUrl}}/tasks HTTP/1.1
+X-User-ID: {{USER_ID}}
+
+### method not allowed on task detail
+
+POST {{baseUrl}}/tasks/1 HTTP/1.1
+Content-Type: application/json
+X-User-ID: {{USER_ID}}
+
+{
+  "title": "Invalid"
+}
