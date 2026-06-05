@@ -310,7 +310,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if hasEmail {
-			user, err = findUserByEmail(*LoginInput.Email)
+			trimmedEmail := strings.TrimSpace(*LoginInput.Email)
+			user, err = findUserByEmail(trimmedEmail)
 			if err != nil {
 				writeError(w, http.StatusUnauthorized, "Invalid credentials")
 				return
@@ -331,7 +332,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else {
-			user, err = findUserByUsername(*LoginInput.Username)
+			trimmedUsername := strings.TrimSpace(*LoginInput.Username)
+			user, err = findUserByUsername(trimmedUsername)
 			if err != nil {
 				writeError(w, http.StatusUnauthorized, "Invalid credentials")
 				return
