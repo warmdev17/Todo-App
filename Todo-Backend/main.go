@@ -414,6 +414,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 				Username: newUser.Username,
 			},
 		})
+		return
 	}
 
 	writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
