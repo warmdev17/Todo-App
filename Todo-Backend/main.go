@@ -317,7 +317,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			err := bcrypt.CompareHashAndPassword([]byte(user.HashPassword), []byte(*LoginInput.Password))
 			if err != nil {
-				writeError(w, http.StatusUnauthorized, "Invalid email or password")
+				writeError(w, http.StatusUnauthorized, "Invalid credentials")
 				return
 			} else {
 				writeJSON(w, http.StatusOK, map[string]any{
@@ -339,7 +339,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 			err := bcrypt.CompareHashAndPassword([]byte(user.HashPassword), []byte(*LoginInput.Password))
 			if err != nil {
-				writeError(w, http.StatusUnauthorized, "Invalid username or password")
+				writeError(w, http.StatusUnauthorized, "Invalid credentials")
 				return
 			} else {
 				writeJSON(w, http.StatusOK, map[string]any{
