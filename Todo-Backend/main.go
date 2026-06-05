@@ -81,11 +81,12 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	currentUser, statusCode, err := getCurrentUser(r)
+	if err != nil {
+		writeError(w, statusCode, err.Error())
+		return
+	}
+
 	if r.Method == http.MethodGet {
-		if err != nil {
-			writeError(w, statusCode, err.Error())
-			return
-		}
 
 		var userTask []Task
 
