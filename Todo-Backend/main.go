@@ -75,6 +75,11 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if r.Method != http.MethodGet && r.Method != http.MethodPost {
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
 	currentUser, statusCode, err := getCurrentUser(r)
 	if r.Method == http.MethodGet {
 		if err != nil {
@@ -134,8 +139,6 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-
-	writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 }
 
 func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
@@ -143,6 +146,11 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	if r.Method != http.MethodGet && r.Method != http.MethodDelete && r.Method != http.MethodPatch {
+		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
@@ -249,18 +257,13 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 			return
 
 		}
-	default:
-		{
-			writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
-			return
-		}
 	}
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	setCORSHeader(w, "POST, OPTIONS")
 
-	var LoginInput struct {
+	var loginInput struct {
 		Email    *string `json:"email"`
 		Password *string `json:"password"`
 		Username *string `json:"username"`
@@ -272,41 +275,41 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPost {
-		err := json.NewDecoder(r.Body).Decode(&LoginInput)
+		err := json.NewDecoder(r.Body).Decode(&loginInput)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, "Invalid JSON")
 			return
 		}
 
-		if LoginInput.Email == nil &&
-			LoginInput.Username == nil &&
-			LoginInput.Password == nil {
+		if loginInput.Email == nil &&
+			loginInput.Username == nil &&
+			loginInput.Password == nil {
 			writeError(w, http.StatusBadRequest, "request body is required")
 			return
 		}
 
 		var user User
 
-		if isBlankPointer(LoginInput.Password) {
+		if isBlankPointer(loginInput.Password) {
 			writeError(w, http.StatusBadRequest, "password is required")
 			return
 		}
 
-		hasEmail := !isBlankPointer(LoginInput.Email)
-		hasUsername := !isBlankPointer(LoginInput.Username)
+		hasEmail := !isBlankPointer(loginInput.Email)
+		hasUsername := !isBlankPointer(loginInput.Username)
 
 		if hasEmail == hasUsername {
 			writeError(w, http.StatusBadRequest, "use either username or email")
 			return
 		}
 		if hasEmail {
-			trimmedEmail := strings.TrimSpace(*LoginInput.Email)
+			trimmedEmail := strings.TrimSpace(*loginInput.Email)
 			user, err = findUserByEmail(trimmedEmail)
 			if err != nil {
 				writeError(w, http.StatusUnauthorized, "Invalid credentials")
 				return
 			}
-			err := bcrypt.CompareHashAndPassword([]byte(user.HashPassword), []byte(*LoginInput.Password))
+			err := bcrypt.CompareHashAndPassword([]byte(user.HashPassword), []byte(*loginInput.Password))
 			if err != nil {
 				writeError(w, http.StatusUnauthorized, "Invalid credentials")
 				return
@@ -322,14 +325,14 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else {
-			trimmedUsername := strings.TrimSpace(*LoginInput.Username)
+			trimmedUsername := strings.TrimSpace(*loginInput.Username)
 			user, err = findUserByUsername(trimmedUsername)
 			if err != nil {
 				writeError(w, http.StatusUnauthorized, "Invalid credentials")
 				return
 			}
 
-			err := bcrypt.CompareHashAndPassword([]byte(user.HashPassword), []byte(*LoginInput.Password))
+			err := bcrypt.CompareHashAndPassword([]byte(user.HashPassword), []byte(*loginInput.Password))
 			if err != nil {
 				writeError(w, http.StatusUnauthorized, "Invalid credentials")
 				return
@@ -469,7 +472,7 @@ func findUserByEmail(email string) (User, error) {
 		}
 	}
 
-	return User{}, errors.New("user does not exists")
+	return User{}, errors.New("user does not exist")
 }
 
 func findUserByUsername(username string) (User, error) {
@@ -479,7 +482,7 @@ func findUserByUsername(username string) (User, error) {
 		}
 	}
 
-	return User{}, errors.New("user does not exists")
+	return User{}, errors.New("user does not exist")
 }
 
 func isBlankPointer(value *string) bool {
