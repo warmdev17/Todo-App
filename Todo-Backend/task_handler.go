@@ -48,11 +48,6 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 			Title *string `json:"title"`
 		}
 
-		if err != nil {
-			writeError(w, http.StatusUnauthorized, err.Error())
-			return
-		}
-
 		err = json.NewDecoder(r.Body).Decode(&input)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, "Invalid JSON")
