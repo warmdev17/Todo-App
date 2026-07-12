@@ -57,7 +57,7 @@ func getUserByID(id int) (User, error) {
 }
 
 func getCurrentUser(r *http.Request) (User, int, error) {
-	userIDAny := r.Context().Value("userID")
+	userIDAny := r.Context().Value(userIDKey)
 
 	if userIDAny == nil {
 		return User{}, http.StatusUnauthorized, errors.New("unauthorized")
