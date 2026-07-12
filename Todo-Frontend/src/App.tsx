@@ -100,7 +100,7 @@ function App() {
   function getAuthHeader(): HeadersInit {
     return {
       "Content-Type": "application/json",
-      "X-User-ID": localStorage.getItem("userId") ?? "",
+      Authorization: localStorage.getItem("token") ?? "",
     };
   }
 
