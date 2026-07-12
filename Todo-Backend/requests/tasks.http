@@ -4,9 +4,9 @@
 ### get all tasks
 
 GET {{baseUrl}}/tasks HTTP/1.1
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
-### get all task without X-USER-ID
+### get all task without TOKEN
 
 GET {{baseUrl}}/tasks HTTP/1.1
 
@@ -14,13 +14,13 @@ GET {{baseUrl}}/tasks HTTP/1.1
 
 POST {{baseUrl}}/tasks HTTP/1.1
 Content-Type: application/json
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 {
   "title": "xin chao"
 }
 
-### add new task missing X-USER-ID
+### add new task missing TOKEN
 
 POST {{baseUrl}}/tasks HTTP/1.1
 Content-Type: application/json
@@ -33,7 +33,7 @@ Content-Type: application/json
 
 POST {{baseUrl}}/tasks HTTP/1.1
 Content-Type: application/json
-X-USER-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 {}
 
@@ -41,7 +41,7 @@ X-USER-ID: {{USER_ID}}
 
 POST {{baseUrl}}/tasks HTTP/1.1
 Content-Type: application/json
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 {
   "title": ""
@@ -51,7 +51,7 @@ X-User-ID: {{USER_ID}}
 
 POST {{baseUrl}}/tasks HTTP/1.1
 Content-Type: application/json
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 {
   "title": "   "
@@ -61,7 +61,7 @@ X-User-ID: {{USER_ID}}
 
 POST {{baseUrl}}/tasks HTTP/1.1
 Content-Type: application/json
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 {
   "title": true
@@ -71,7 +71,7 @@ X-User-ID: {{USER_ID}}
 
 PATCH {{baseUrl}}/tasks/1 HTTP/1.1
 Content-Type: application/json
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 {}
 
@@ -79,7 +79,7 @@ X-User-ID: {{USER_ID}}
 
 PATCH {{baseUrl}}/tasks/1 HTTP/1.1
 Content-Type: application/json
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 {
   "title": "Learn Golang Vip Pro"
@@ -89,13 +89,13 @@ X-User-ID: {{USER_ID}}
 
 PATCH {{baseUrl}}/tasks/1 HTTP/1.1
 Content-Type: application/json
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 {
   "title": true
 }
 
-### edit task title missing X-User-ID
+### edit task title missing Authorization
 
 PATCH {{baseUrl}}/tasks/1 HTTP/1.1
 Content-Type: application/json
@@ -108,7 +108,7 @@ Content-Type: application/json
 
 PATCH {{baseUrl}}/tasks/1 HTTP/1.1
 Content-Type: application/json
-X-User-ID: 100
+Authorization: 100
 
 {
   "title": "Learn Golang Vip Pro"
@@ -118,7 +118,7 @@ X-User-ID: 100
 
 PATCH {{baseUrl}}/tasks/100 HTTP/1.1
 Content-Type: application/json
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 {
   "title": "Learn Golang Vip Pro"
@@ -128,7 +128,7 @@ X-User-ID: {{USER_ID}}
 
 PATCH {{baseUrl}}/tasks/1 HTTP/1.1
 Content-Type: application/json
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 {
   "title": ""
@@ -138,7 +138,7 @@ X-User-ID: {{USER_ID}}
 
 PATCH {{baseUrl}}/tasks/1 HTTP/1.1
 Content-Type: application/json
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 {
   "title": "   "
@@ -148,7 +148,7 @@ X-User-ID: {{USER_ID}}
 
 PATCH {{baseUrl}}/tasks/1 HTTP/1.1
 Content-Type: application/json
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 {
   "completed": true
@@ -158,7 +158,7 @@ X-User-ID: {{USER_ID}}
 
 PATCH {{baseUrl}}/tasks/1 HTTP/1.1
 Content-Type: application/json
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 {
   "completed": "true"
@@ -168,7 +168,7 @@ X-User-ID: {{USER_ID}}
 
 PATCH {{baseUrl}}/tasks/1 HTTP/1.1
 Content-Type: application/json
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 {
   "title": "Learn Go net/http",
@@ -179,7 +179,7 @@ X-User-ID: {{USER_ID}}
 
 PATCH {{baseUrl}}/tasks/1 HTTP/1.1
 Content-Type: application/json
-X-User-ID: 2
+Authorization: 2
 
 {
   "title": "Hacked title"
@@ -188,32 +188,32 @@ X-User-ID: 2
 ### delete task
 
 DELETE {{baseUrl}}/tasks/1 HTTP/1.1
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
-### delete task missing X-User-ID
+### delete task missing Authorization
 
 DELETE {{baseUrl}}/tasks/1 HTTP/1.1
 
 ### delete task not exist
 
 DELETE {{baseUrl}}/tasks/100 HTTP/1.1
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 ### delete task owned by another user
 
 DELETE {{baseUrl}}/tasks/1 HTTP/1.1
-X-User-ID: {{OTHER_USER_ID}}
+Authorization: {{OTHER_TOKEN}}
 
 ### method not allowed on tasks
 
 PUT {{baseUrl}}/tasks HTTP/1.1
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 ### method not allowed on task detail
 
 POST {{baseUrl}}/tasks/1 HTTP/1.1
 Content-Type: application/json
-X-User-ID: {{USER_ID}}
+Authorization: {{TOKEN}}
 
 {
   "title": "Invalid"

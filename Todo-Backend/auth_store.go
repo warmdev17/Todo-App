@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"net/http"
-	"strconv"
 )
 
 var users = []User{
@@ -58,19 +57,20 @@ func getUserByID(id int) (User, error) {
 }
 
 func getCurrentUser(r *http.Request) (User, int, error) {
-	userIDText := r.Header.Get("X-User-ID")
-	if userIDText == "" {
-		return User{}, http.StatusUnauthorized, errors.New("missing user id")
+	userIDAny := r.Context().Value("userID")
+
+	if userIDAny == nil {
+		return User{}, http.StatusUnauthorized, errors.New("unauthorized")
 	}
 
-	userID, err := strconv.Atoi(userIDText)
-	if err != nil {
-		return User{}, http.StatusBadRequest, errors.New("invalid user id")
+	userID, ok := userIDAny.(int)
+	if !ok {
+		return User{}, http.StatusUnauthorized, errors.New("invalid user id in context")
 	}
 
 	user, err := getUserByID(userID)
 	if err != nil {
-		return User{}, http.StatusUnauthorized, errors.New("unauthorized")
+		return User{}, http.StatusUnauthorized, errors.New("user not found")
 	}
 
 	return user, http.StatusOK, nil

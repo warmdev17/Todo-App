@@ -13,8 +13,8 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	http.HandleFunc("/tasks", tasksHandler)
-	http.HandleFunc("/tasks/", taskByIDHandler)
+	http.Handle("/tasks", Auth(http.HandlerFunc(tasksHandler)))
+	http.Handle("/tasks/", Auth(http.HandlerFunc(taskByIDHandler)))
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/register", registerHandler)
 	log.Println("Server running on http://localhost:" + os.Getenv("APP_PORT"))

@@ -62,10 +62,17 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 				writeError(w, http.StatusUnauthorized, "Invalid credentials")
 				return
 			} else {
+				tokenString, err := generateToken(user.ID, user.Username)
+
+				if err != nil {
+					writeError(w, http.StatusInternalServerError, "Failed to generate token")
+					return
+				}
+
 				writeJSON(w, http.StatusOK, map[string]any{
 					"success": true,
 					"data": map[string]any{
-						"token":    "fake-token-1",
+						"token":    tokenString,
 						"userId":   user.ID,
 						"username": user.Username,
 					},
@@ -85,10 +92,16 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 				writeError(w, http.StatusUnauthorized, "Invalid credentials")
 				return
 			} else {
+				tokenString, err := generateToken(user.ID, user.Username)
+
+				if err != nil {
+					writeError(w, http.StatusInternalServerError, "Failed to generate token")
+					return
+				}
 				writeJSON(w, http.StatusOK, map[string]any{
 					"success": true,
 					"data": map[string]any{
-						"token":    "fake-token-1",
+						"token":    tokenString,
 						"userId":   user.ID,
 						"username": user.Username,
 					},
