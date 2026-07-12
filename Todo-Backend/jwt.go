@@ -9,10 +9,12 @@ import (
 var jwtSecret = []byte("anhyeuMaiPhuongnhattrendoinayluon")
 
 func generateToken(userID int, username string) (string, error) {
-	claims := jwt.MapClaims{
-		"userId":   userID,
-		"username": username,
-		"exp":      time.Now().Add(time.Hour * 24).Unix(),
+	claims := Claims{
+		UserID:   userID,
+		Username: username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
