@@ -4,11 +4,12 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 var jwtSecret = []byte("anhyeuMaiPhuongnhattrendoinayluon")
 
-func generateToken(userID int, username string) (string, error) {
+func generateToken(userID uuid.UUID, username string) (string, error) {
 	claims := Claims{
 		UserID:   userID,
 		Username: username,
