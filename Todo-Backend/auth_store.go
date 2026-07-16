@@ -1,59 +1,40 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
+	"log"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
-var users = []User{
-	{1, "hoangmaiphuongtin@gmail.com", "maiphuong", "$2a$10$08/9rz35z3xJ0X0mqikMf.1cgPRiC6Vhi6A7W4dbRixDAtViOKBd."},
-	{2, "warmdevofficial@gmail.com", "warmdev", "$2a$10$BVWV36D.NghpfB9O5gd4muhxzsiXXxTaAnGt6tFA/gkf2xcDkfoN6"},
-}
+func fetchUser(query string, args ...any) (User, error) {
+	var user User
 
-func nextUserID() int {
-	if len(users) == 0 {
-		return 1
-	}
+	err := DB.Get(&user, query, args...)
 
-	max := users[0].ID
-
-	for _, user := range users {
-		if user.ID > max {
-			max = user.ID
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return User{}, errors.New("user does not exist")
 		}
+
+		return User{}, errors.New("user does not exist")
 	}
 
-	return max + 1
+	return user, nil
 }
 
 func findUserByEmail(email string) (User, error) {
-	for _, user := range users {
-		if user.Email == email {
-			return user, nil
-		}
-	}
-
-	return User{}, errors.New("user does not exist")
+	return fetchUser("SELECT id, username, email, hash_password FROM users WHERE email = $1", email)
 }
 
 func findUserByUsername(username string) (User, error) {
-	for _, user := range users {
-		if user.Username == username {
-			return user, nil
-		}
-	}
-
-	return User{}, errors.New("user does not exist")
+	return fetchUser("SELECT id, username, email, hash_password FROM users WHERE username = $1", username)
 }
 
-func getUserByID(id int) (User, error) {
-	for _, user := range users {
-		if user.ID == id {
-			return user, nil
-		}
-	}
-
-	return User{}, errors.New("user not found")
+func getUserByID(id uuid.UUID) (User, error) {
+	return fetchUser("SELECT id, username, email, hash_password FROM users WHERE id = $1", id)
 }
 
 func getCurrentUser(r *http.Request) (User, int, error) {
@@ -63,7 +44,7 @@ func getCurrentUser(r *http.Request) (User, int, error) {
 		return User{}, http.StatusUnauthorized, errors.New("unauthorized")
 	}
 
-	userID, ok := userIDAny.(int)
+	userID, ok := userIDAny.(uuid.UUID)
 	if !ok {
 		return User{}, http.StatusUnauthorized, errors.New("invalid user id in context")
 	}
@@ -74,4 +55,36 @@ func getCurrentUser(r *http.Request) (User, int, error) {
 	}
 
 	return user, http.StatusOK, nil
+}
+
+func createNewUser(user User) (uuid.UUID, error) {
+	query := `
+		INSERT INTO users (username, email, hash_password) 
+		VALUES (:username, :email, :hash_password)
+		RETURNING id`
+
+	rows, err := DB.NamedQuery(query, user)
+
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	defer func() {
+		err := rows.Close()
+
+		if err != nil {
+			log.Println("Failed to close db connection pool")
+		}
+	}()
+
+	var newID uuid.UUID
+
+	if rows.Next() {
+		err := rows.Scan(&newID)
+
+		if err != nil {
+			return uuid.Nil, err
+		}
+	}
+	return newID, nil
 }

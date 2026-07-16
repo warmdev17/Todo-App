@@ -1,23 +1,25 @@
 package main
 
+import "github.com/google/uuid"
+
 type Task struct {
-	ID        int    `json:"id"`
-	UserID    int    `json:"userId"`
-	Title     string `json:"title"`
-	Completed bool   `json:"completed"`
+	ID        int       `json:"id" db:"id"`
+	UserID    uuid.UUID `json:"userId" db:"user_id"`
+	Title     string    `json:"title" db:"title"`
+	Completed bool      `json:"completed" db:"completed"`
 }
 
 type User struct {
-	ID           int    `json:"id"`
-	Email        string `json:"email"`
-	Username     string `json:"username"`
-	HashPassword string `json:"-"`
+	ID           uuid.UUID `json:"id" db:"id"`
+	Email        string    `json:"email" db:"email"`
+	Username     string    `json:"username" db:"username"`
+	HashPassword string    `json:"-" db:"hash_password"`
 }
 
 type AuthUser struct {
-	ID       int    `json:"id"`
-	Email    string `json:"email"`
-	Username string `json:"username"`
+	ID       uuid.UUID `json:"id"`
+	Email    string    `json:"email"`
+	Username string    `json:"username"`
 }
 
 type RegisterInput struct {

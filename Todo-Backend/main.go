@@ -10,6 +10,13 @@ import (
 
 func main() {
 	err := godotenv.Load()
+	initDB()
+	defer func() {
+		if err := DB.Close(); err != nil {
+			log.Println("Failed to close DB connection pool:", err)
+		}
+	}()
+
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}

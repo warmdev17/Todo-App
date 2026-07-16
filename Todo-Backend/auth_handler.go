@@ -163,17 +163,17 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		newUser := User{
-			ID:           nextUserID(),
-			Username:     trimmedUsername,
-			Email:        trimmedEmail,
-			HashPassword: string(hashPassword),
+		newUser := User{Email: trimmedEmail, Username: trimmedUsername, HashPassword: string(hashPassword)}
+
+		userID, err := createNewUser(newUser)
+		if err != nil {
+			writeError(w, http.StatusConflict, err.Error())
+			return
 		}
-		users = append(users, newUser)
 		writeJSON(w, http.StatusCreated, map[string]any{
 			"success": true,
 			"data": AuthUser{
-				ID:       newUser.ID,
+				ID:       userID,
 				Email:    newUser.Email,
 				Username: newUser.Username,
 			},

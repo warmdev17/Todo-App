@@ -28,6 +28,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 
+		// TODO: change to db store
 		var userTask []Task
 
 		for _, task := range tasks {
