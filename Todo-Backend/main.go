@@ -20,12 +20,13 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	http.Handle("/tasks", Auth(http.HandlerFunc(tasksHandler)))
-	http.Handle("/tasks/", Auth(http.HandlerFunc(taskByIDHandler)))
-	http.HandleFunc("/login", loginHandler)
-	http.HandleFunc("/register", registerHandler)
+	mux := http.NewServeMux()
+	mux.Handle("/tasks", Auth(http.HandlerFunc(tasksHandler)))
+	mux.Handle("/tasks/", Auth(http.HandlerFunc(taskByIDHandler)))
+	mux.HandleFunc("/login", loginHandler)
+	mux.HandleFunc("/register", registerHandler)
 	log.Println("Server running on http://localhost:" + os.Getenv("APP_PORT"))
-	err = http.ListenAndServe(":"+os.Getenv("APP_PORT"), nil)
+	err = http.ListenAndServe(":"+os.Getenv("APP_PORT"), CORS(mux))
 	if err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
