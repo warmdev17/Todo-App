@@ -8,8 +8,6 @@ import (
 )
 
 func tasksHandler(w http.ResponseWriter, r *http.Request) {
-	setCORSHeader(w, "GET, POST, OPTIONS")
-
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusNoContent)
 		return
@@ -28,18 +26,16 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 
-		// TODO: change to db store
-		var userTask []Task
+		tasks, err := getTasksByUserID(currentUser.ID)
 
-		for _, task := range tasks {
-			if task.UserID == currentUser.ID {
-				userTask = append(userTask, task)
-			}
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "Failed to get tasks")
+			return
 		}
 
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
-			"data":    userTask,
+			"data":    tasks,
 		})
 		return
 	}
@@ -79,8 +75,6 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
-	setCORSHeader(w, "GET, DELETE, PATCH, OPTIONS")
-
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusNoContent)
 		return
