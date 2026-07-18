@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"errors"
 
 	"github.com/google/uuid"
@@ -24,21 +25,52 @@ func nextTaskID() int {
 	return max + 1
 }
 
-func getTaskByIDAndUserID(id int, userID uuid.UUID) (Task, error) {
-	for _, task := range tasks {
-		if task.ID == id && task.UserID == userID {
-			return task, nil
-		}
+func getTaskByIDAndUserID(taskID int, userID uuid.UUID) (Task, error) {
+	var task Task
+	query := `
+		SELECT id, title, completed FROM tasks WHERE id = $1 AND user_id = $2
+	`
+
+	err := DB.Get(&task, query, taskID, userID)
+	if err != nil {
+		return Task{}, err
 	}
-	return Task{}, errors.New("task not found")
+
+	return task, nil
 }
 
-func getTaskIndexByIDAndUserID(id int, userID uuid.UUID) (int, error) {
-	for index, task := range tasks {
-		if task.ID == id && task.UserID == userID {
-			return index, nil
+func deleteTaskByIDAndUserID(taskID int, userID uuid.UUID) (Task, error) {
+	var deletedTask Task
+
+	query := `
+		DELETE FROM tasks
+		WHERE id = $1 AND user_id = $2 
+		RETURNING *
+	`
+
+	err := DB.Get(&deletedTask, query, taskID, userID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return Task{}, errors.New("Task not found")
 		}
+
+		return Task{}, err
 	}
 
-	return -1, errors.New("task not found")
+	return deletedTask, nil
+}
+
+func getTasksByUserID(userID uuid.UUID) ([]Task, error) {
+	var tasks []Task
+
+	query := `SELECT id, title, completed FROM tasks WHERE user_id = $1`
+
+	err := DB.Select(&tasks, query, userID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
 }

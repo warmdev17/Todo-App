@@ -118,14 +118,12 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			index, err := getTaskIndexByIDAndUserID(id, currentUser.ID)
+			deletedTask, err := deleteTaskByIDAndUserID(id, currentUser.ID)
+
 			if err != nil {
-				writeError(w, http.StatusNotFound, err.Error())
+				writeError(w, http.StatusNotFound, "Task not found")
 				return
 			}
-
-			deletedTask := tasks[index]
-			tasks = append(tasks[:index], tasks[index+1:]...)
 
 			writeJSON(w, http.StatusOK, map[string]any{
 				"success": true,
