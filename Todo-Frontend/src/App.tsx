@@ -275,7 +275,7 @@ function App() {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        "X-User-ID": localStorage.getItem("userId") ?? "",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
     })
       .then(async (response) => {
