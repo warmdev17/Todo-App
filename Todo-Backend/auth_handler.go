@@ -9,8 +9,6 @@ import (
 )
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	setCORSHeader(w, "POST, OPTIONS")
-
 	var loginInput struct {
 		Email    *string `json:"email"`
 		Password *string `json:"password"`
@@ -115,8 +113,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
-	setCORSHeader(w, "POST, OPTIONS")
-
 	if r.Method == http.MethodOptions {
 		w.WriteHeader(http.StatusNoContent)
 		return
