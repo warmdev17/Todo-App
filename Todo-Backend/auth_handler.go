@@ -16,7 +16,10 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPost {
-		err := json.NewDecoder(r.Body).Decode(&loginInput)
+		var user User
+		var err error
+
+		err = json.NewDecoder(r.Body).Decode(&loginInput)
 		if err != nil {
 			writeError(w, http.StatusBadRequest, "Invalid JSON")
 			return
@@ -28,8 +31,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, "request body is required")
 			return
 		}
-
-		var user User
 
 		if isBlankPointer(loginInput.Password) {
 			writeError(w, http.StatusBadRequest, "password is required")
@@ -46,62 +47,36 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		if hasEmail {
 			trimmedEmail := strings.TrimSpace(*loginInput.Email)
 			user, err = findUserByEmail(trimmedEmail)
-			if err != nil {
-				writeError(w, http.StatusUnauthorized, "Invalid credentials")
-				return
-			}
-			err := bcrypt.CompareHashAndPassword([]byte(user.HashPassword), []byte(*loginInput.Password))
-			if err != nil {
-				writeError(w, http.StatusUnauthorized, "Invalid credentials")
-				return
-			} else {
-				tokenString, err := generateToken(user.ID, user.Username)
-
-				if err != nil {
-					writeError(w, http.StatusInternalServerError, "Failed to generate token")
-					return
-				}
-
-				writeJSON(w, http.StatusOK, map[string]any{
-					"success": true,
-					"data": map[string]any{
-						"token":    tokenString,
-						"userId":   user.ID,
-						"username": user.Username,
-					},
-				})
-				return
-			}
 		} else {
 			trimmedUsername := strings.TrimSpace(*loginInput.Username)
 			user, err = findUserByUsername(trimmedUsername)
-			if err != nil {
-				writeError(w, http.StatusUnauthorized, "Invalid credentials")
-				return
-			}
-
-			err := bcrypt.CompareHashAndPassword([]byte(user.HashPassword), []byte(*loginInput.Password))
-			if err != nil {
-				writeError(w, http.StatusUnauthorized, "Invalid credentials")
-				return
-			} else {
-				tokenString, err := generateToken(user.ID, user.Username)
-
-				if err != nil {
-					writeError(w, http.StatusInternalServerError, "Failed to generate token")
-					return
-				}
-				writeJSON(w, http.StatusOK, map[string]any{
-					"success": true,
-					"data": map[string]any{
-						"token":    tokenString,
-						"userId":   user.ID,
-						"username": user.Username,
-					},
-				})
-				return
-			}
 		}
+		if err != nil {
+			writeError(w, http.StatusUnauthorized, "Invalid credentials")
+			return
+		}
+
+		err = bcrypt.CompareHashAndPassword([]byte(user.HashPassword), []byte(*loginInput.Password))
+		if err != nil {
+			writeError(w, http.StatusUnauthorized, "Invalid credentials")
+			return
+		}
+
+		tokenString, err := generateToken(user.ID, user.Username)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "Failed to generate token")
+			return
+		}
+
+		writeJSON(w, http.StatusOK, map[string]any{
+			"success": true,
+			"data": map[string]any{
+				"token":    tokenString,
+				"userId":   user.ID,
+				"username": user.Username,
+			},
+		})
+		return
 	}
 
 	writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
