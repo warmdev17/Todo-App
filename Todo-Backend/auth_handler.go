@@ -15,11 +15,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		Username *string `json:"username"`
 	}
 
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-
 	if r.Method == http.MethodPost {
 		err := json.NewDecoder(r.Body).Decode(&loginInput)
 		if err != nil {
@@ -113,11 +108,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-
 	var input RegisterInput
 
 	if r.Method == http.MethodPost {

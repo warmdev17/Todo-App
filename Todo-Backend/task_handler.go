@@ -8,11 +8,6 @@ import (
 )
 
 func tasksHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-
 	if r.Method != http.MethodGet && r.Method != http.MethodPost {
 		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
@@ -72,11 +67,6 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodOptions {
-		w.WriteHeader(http.StatusNoContent)
-		return
-	}
-
 	if r.Method != http.MethodGet && r.Method != http.MethodDelete && r.Method != http.MethodPatch {
 		writeError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
