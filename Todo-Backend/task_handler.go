@@ -156,6 +156,7 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 					writeError(w, http.StatusBadRequest, "Title cannot be empty")
 					return
 				}
+				*input.Title = trimmedTitle
 			}
 
 			task, err := updateTaskByIDAndUserID(taskID, currentUser.ID, input)
