@@ -90,7 +90,7 @@ func updateTaskByIDAndUserID(taskID int, userID uuid.UUID, input UpdateTaskInput
 		if err == sql.ErrNoRows {
 			return Task{}, errors.New("Task not found")
 		}
-		return Task{}, nil
+		return Task{}, err
 	}
 
 	return udpatedTask, nil
