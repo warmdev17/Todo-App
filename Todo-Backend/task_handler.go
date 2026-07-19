@@ -41,9 +41,7 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.Method == http.MethodPost {
-		var input struct {
-			Title *string `json:"title"`
-		}
+		var input TaskCreate
 
 		err = json.NewDecoder(r.Body).Decode(&input)
 		if err != nil {
@@ -58,14 +56,13 @@ func tasksHandler(w http.ResponseWriter, r *http.Request) {
 
 		trimmedTitle := strings.TrimSpace(*input.Title)
 
-		newTask := Task{
-			ID:        nextTaskID(),
-			Title:     trimmedTitle,
-			UserID:    currentUser.ID,
-			Completed: false,
+		newTask, err := createNewTask(currentUser.ID, trimmedTitle)
+
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
 		}
 
-		tasks = append(tasks, newTask)
 		writeJSON(w, http.StatusCreated, map[string]any{
 			"success": true,
 			"data":    newTask,

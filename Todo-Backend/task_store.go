@@ -9,24 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-var tasks = []Task{}
-
-func nextTaskID() int {
-	if len(tasks) == 0 {
-		return 1
-	}
-
-	max := tasks[0].ID
-
-	for _, task := range tasks {
-		if task.ID > max {
-			max = task.ID
-		}
-	}
-
-	return max + 1
-}
-
 func getTaskByIDAndUserID(taskID int, userID uuid.UUID) (Task, error) {
 	var task Task
 	query := `
@@ -41,6 +23,21 @@ func getTaskByIDAndUserID(taskID int, userID uuid.UUID) (Task, error) {
 	return task, nil
 }
 
+func createNewTask(userID uuid.UUID, title string) (Task, error) {
+	var newTask Task
+	query := `
+		INSERT INTO tasks (title, user_id)
+		VALUES ($1, $2) RETURNING *
+	`
+
+	err := DB.Get(&newTask, query, title, userID)
+
+	if err != nil {
+		return Task{}, err
+	}
+
+	return newTask, nil
+}
 func deleteTaskByIDAndUserID(taskID int, userID uuid.UUID) (Task, error) {
 	var deletedTask Task
 

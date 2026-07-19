@@ -83,8 +83,8 @@ POST {{baseUrl}}/login HTTP/1.1
 Content-Type: application/json
 
 {
-  "username": "maiphuong",
-  "password": "maiphuong"
+  "username": "warmdev",
+  "password": "17052007"
 }
 
 > {%
