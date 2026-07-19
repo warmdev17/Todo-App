@@ -3,6 +3,8 @@ package main
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -59,6 +61,42 @@ func deleteTaskByIDAndUserID(taskID int, userID uuid.UUID) (Task, error) {
 	}
 
 	return deletedTask, nil
+}
+
+func updateTaskByIDAndUserID(taskID int, userID uuid.UUID, input UpdateTaskInput) (Task, error) {
+	var udpatedTask Task
+
+	setClauses := []string{}
+	args := []any{}
+	argID := 1
+
+	if input.Title != nil {
+		setClauses = append(setClauses, fmt.Sprintf("title = $%d", argID))
+		args = append(args, *input.Title)
+		argID++
+	}
+
+	if input.Completed != nil {
+		setClauses = append(setClauses, fmt.Sprintf("completed = $%d", argID))
+		args = append(args, *input.Completed)
+		argID++
+	}
+
+	query := `UPDATE tasks SET ` + strings.Join(setClauses, ", ")
+
+	query += fmt.Sprintf(` WHERE id = $%d AND user_id = $%d RETURNING *`, argID, argID+1)
+	args = append(args, taskID, userID)
+
+	err := DB.Get(&udpatedTask, query, args...)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return Task{}, errors.New("Task not found")
+		}
+		return Task{}, nil
+	}
+
+	return udpatedTask, nil
 }
 
 func getTasksByUserID(userID uuid.UUID) ([]Task, error) {

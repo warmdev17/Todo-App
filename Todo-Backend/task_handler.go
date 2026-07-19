@@ -133,10 +133,7 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	case http.MethodPatch:
 		{
-			var input struct {
-				Completed *bool   `json:"completed"`
-				Title     *string `json:"title"`
-			}
+			var input UpdateTaskInput
 
 			err = json.NewDecoder(r.Body).Decode(&input)
 			if err != nil {
@@ -149,7 +146,7 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			id, err := getTaskIDFromPath(r)
+			taskID, err := getTaskIDFromPath(r)
 			if err != nil {
 				writeError(w, http.StatusBadRequest, "Invalid task id")
 				return
@@ -164,23 +161,16 @@ func taskByIDHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
-			index, err := getTaskIndexByIDAndUserID(id, currentUser.ID)
+			task, err := updateTaskByIDAndUserID(taskID, currentUser.ID, input)
+
 			if err != nil {
 				writeError(w, http.StatusNotFound, err.Error())
 				return
 			}
 
-			if input.Title != nil {
-				tasks[index].Title = trimmedTitle
-			}
-
-			if input.Completed != nil {
-				tasks[index].Completed = *input.Completed
-			}
-
 			writeJSON(w, http.StatusOK, map[string]any{
 				"success": true,
-				"data":    tasks[index],
+				"data":    task,
 			})
 
 			return

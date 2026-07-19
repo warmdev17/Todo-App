@@ -28,3 +28,8 @@ type RegisterInput struct {
 	Password        *string `json:"password"`
 	ConfirmPassword *string `json:"confirmPassword"`
 }
+
+type UpdateTaskInput struct {
+	Completed *bool   `json:"completed" db:"completed"`
+	Title     *string `json:"title" db:"title"`
+}
